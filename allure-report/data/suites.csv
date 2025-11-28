@@ -1,0 +1,4 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","14030","Login successfully with valid credentials:","chromium","Fri Nov 28 09:33:26 ICT 2025","failed","Fri Nov 28 09:33:40 ICT 2025","Login feature","e2e\b_login.spec.ts","",""
+"","5386","Open Page","chromium","Fri Nov 28 09:33:05 ICT 2025","passed","Fri Nov 28 09:33:10 ICT 2025","","e2e\a_register.spec.ts","",""
+"","12324","Register successfully with valid credentials","chromium","Fri Nov 28 09:33:10 ICT 2025","failed","Fri Nov 28 09:33:23 ICT 2025","","e2e\a_register.spec.ts","",""
