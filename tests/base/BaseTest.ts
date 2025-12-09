@@ -6,9 +6,9 @@ import fs from 'fs';
 import path from 'path';
 import { allure } from 'allure-playwright';
 
-type EnvConfig = {
+export type EnvConfig = {
   baseURL: string;
-  defaultUser?: { email: string; password: string };
+  defaultUser: { email: string; password: string };
 };
 
 type MyFixtures = {
@@ -24,6 +24,19 @@ type MyFixtures = {
   if (!fs.existsSync(p)) throw new Error(`Env file not found: ${p}`);
   return JSON.parse(fs.readFileSync(p, 'utf8')) as EnvConfig;
 };
+
+// Auto login function
+  autoLogin: async ({ page, env }, use) => {
+    const autoLoginFn = async () => {
+      await page.goto(env.baseURL);
+      const loginPage = new LoginPage(page);
+      await loginPage.enterEmail(env.default_email);
+      await loginPage.enterPassword(env.default_password);
+      await loginPage.clickLoginButton();
+    };
+
+    await use(autoLoginFn);
+  }
 
   export const test = base.extend<MyFixtures>({
   // env fixture: load environments/<env>.json

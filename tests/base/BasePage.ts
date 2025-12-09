@@ -1,4 +1,4 @@
-//BasePage → Page Object → Page UI → Fixtures → Tests
+//BasePage -> Fixtures → Page Object → Page UI  → Tests
 import { Page, Locator, expect } from '@playwright/test';
 import { allure } from 'allure-playwright';
 
@@ -186,12 +186,25 @@ export class BasePage {
   }
 
   // ===== Tiện ích khác =====
-  async wait(ms: number) {
+  async wait(ms: number = 1000) {
     await this.page.waitForTimeout(ms);
   }
 
   async getAttribute(selector: string, attr: string) {
     return await this.page.getAttribute(selector, attr);
   }
+
+  //** LẤY BROWSER VALIDATION MESSAGE CHO FIELD EMAIL/PASSWORD */
+  async getValidationMessageById(fieldId: string) {
+    const locator = this.page.locator(`#${fieldId}`);
+    return await locator.evaluate((el: any) => el.validationMessage);
+  }
+
+  /** LẤY VALIDATION MESSAGE DÙNG SELECTOR (nếu field không có id) */
+  async getValidationMessage(selector: string ) {
+    const locator = this.page.locator(selector);
+    return await locator.evaluate((el: any) => el.validationMessage);
+  }
+
   
 }
