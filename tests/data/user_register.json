@@ -1,13 +1,18 @@
 {
-    "invalid_email": "longnguyen",
+    "invalid_email": "longnguyen@",
     "firstname": "long",
     "middlename": "dinh",
     "lastname": "nguyen",
-    "email": "long_",
+    "valid_email": "long_nguyen@qa.team",
     "password": "123456",
     "confirm_password": "123456",
+    "short_password": "123",
+    "non_password": "123457",
     "register_error_message": "This is a required field.",
-    "email_toast_error_message": "Please include an \\'@\\' in the email address. \\'long\\' is missing an \\'@\\'.",
-    "register_success_message": "Thank you for registering with Main Website Store."
+    "email_toast_error_message": "Please enter a part following '@'. 'longnguyen@' is incomplete.",
+    "register_success_message": "Thank you for registering with Main Website Store.",
+    "password_not_match_error": "Please make sure your passwords match.",
+  "password_min_length_error": "Please enter 6 or more characters without leading or trailing spaces."
 }
+
  
