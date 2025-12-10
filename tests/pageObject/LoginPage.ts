@@ -46,6 +46,6 @@ export class LoginPage extends BasePage {
 
   async verifyLoginSuccess() {
     // Gọi lại hàm ở BasePage
-    await this.expectExactURL('http://live.techpanda.org/index.php/customer/account/s');
+    await this.expectExactURL('http://live.techpanda.org/index.php/customer/account/');
   }
 }

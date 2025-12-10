@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { RegisterPage } from '../pageObject/RegisterPage';
 import { HomePage } from '../pageObject/HomePage';
-
+import { delay } from "../ultility/utils";
 import { BasePage } from '../base/BasePage';
 import testData from '../data/user_register.json';
 import { test } from '../base/BaseTest'; // Đảm bảo đường dẫn chính xác
@@ -85,8 +85,9 @@ test('Open Page', async ({ page, env }) => {
 // ❌ CASE 4 – PASSWORD & CONFIRM PASSWORD KHÔNG TRÙNG
    test("Register unsuccessfully when password and confirm password do not match", async ({ registerPage, homePage, page }) => {
     await homePage.click_Menu_Account_Link();
+    await delay();
     await homePage.click_Register_Link();
-    
+    await delay();
     await registerPage.enterFirstname(testData.firstname);
     await registerPage.enterMiddlename(testData.middlename);
     await registerPage.enterLastname(testData.lastname);

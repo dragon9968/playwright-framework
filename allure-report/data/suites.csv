@@ -1,0 +1,8 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","17133","Register successfully with valid credentials","chromium","Wed Dec 10 09:30:29 ICT 2025","passed","Wed Dec 10 09:30:46 ICT 2025","","e2e\a_register.spec.ts","",""
+"","13458","Login successfully with valid credentials:","chromium","Wed Dec 10 09:30:46 ICT 2025","failed","Wed Dec 10 09:31:00 ICT 2025","Login feature","e2e\b_login.spec.ts","",""
+"","14463","Register unsuccessfully when password is less than 6 characters","chromium","Wed Dec 10 09:29:54 ICT 2025","passed","Wed Dec 10 09:30:09 ICT 2025","","e2e\a_register.spec.ts","",""
+"","13001","Register fail: invalid email format","chromium","Wed Dec 10 09:29:41 ICT 2025","passed","Wed Dec 10 09:29:54 ICT 2025","","e2e\a_register.spec.ts","",""
+"","20027","Register unsuccessfully when password and confirm password do not match","chromium","Wed Dec 10 09:30:09 ICT 2025","passed","Wed Dec 10 09:30:29 ICT 2025","","e2e\a_register.spec.ts","",""
+"","9833","Open Page","chromium","Wed Dec 10 09:29:23 ICT 2025","passed","Wed Dec 10 09:29:33 ICT 2025","","e2e\a_register.spec.ts","",""
+"","6382","Register fail: all fields empty","chromium","Wed Dec 10 09:29:35 ICT 2025","passed","Wed Dec 10 09:29:41 ICT 2025","","e2e\a_register.spec.ts","",""
