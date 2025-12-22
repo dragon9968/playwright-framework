@@ -3,7 +3,7 @@ import { test } from '../base/BaseTest'; // Đảm bảo đường dẫn chính 
 import fs from 'fs';
 import path from 'path';
 import { allure } from 'allure-playwright';
-
+import loginData from "../data/user_login_invalid.json";
 test.describe('Login feature', () => {
   let email: string;
   let password: string;
@@ -24,9 +24,24 @@ const env = process.env.ENV || 'dev';
   const envConfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, `../environments/${env}.json`), 'utf8')
   );*/
-  
+  test.beforeEach(async ({ page ,loginPage,  env }) => {
+      await loginPage.goTo(env.baseURL);
+  });
 
-  test('Login successfully with valid credentials: ', async ({page, loginPage, homePage, registerPage, testUser, env }) => {
+   test("CASE 1 – TẤT CẢ FIELD TRỐNG", async ({ homePage, loginPage }) => {
+     await homePage.click_Menu_Account_Link();
+     await homePage.click_Login_Link();
+     await loginPage.clickLoginButton();
+
+     const emailError = await loginPage.getFieldError("email");
+     const passwordError = await loginPage.getFieldError("pass");
+
+     expect(emailError).toBe(loginData.required_error);
+     expect(passwordError).toBe(loginData.required_error);
+  });
+
+
+   test('Login successfully with valid credentials: ', async ({page, loginPage, homePage, registerPage, testUser, env }) => {
     await allure.step('Đi tới trang login', async () => {
     //await loginPage.navigateLoginPage();
     //await loginPage.navigateTo(envConfig.baseURL);

@@ -48,4 +48,20 @@ export class LoginPage extends BasePage {
     // Gọi lại hàm ở BasePage
     await this.expectExactURL('http://live.techpanda.org/index.php/customer/account/');
   }
+
+ async getFieldError(field: string) {
+    return this.getElementText(LoginPageUI.fieldError(field));
+  }
+
+  async getEmailFormatError() {
+    return this.getElementText(LoginPageUI.emailFormatError);
+  }
+
+  async getLoginFailedMessage() {
+    return this.getElementText(LoginPageUI.loginFailedMessage);
+
+  }
+
+
+
 }

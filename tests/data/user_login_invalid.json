@@ -1,0 +1,17 @@
+{
+  "valid_email": "long_nguyen@qa.team",
+  "valid_password": "123456",
+
+  "invalid_email_case1": "long",
+  "invalid_email_case2": "long@",
+  "invalid_email_case3": "long@qa",
+
+  "wrong_email": "notfound@gmail.com",
+  "wrong_password": "abcdef",
+
+  "required_error": "This is a required field.",
+  "email_toast_error_message1": "Please enter a part following '@'. 'long@' is incomplete.",
+  "email_toast_error_message2": "Please enter a part following '@'. 'long@' is incomplete.",
+  "email_format_error": "Please enter a valid email address (Ex: johndoe@domain.com).",
+  "login_failed_message": "Invalid login or password."
+}
