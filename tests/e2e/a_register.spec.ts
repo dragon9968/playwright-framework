@@ -65,7 +65,6 @@ test('Open Page', async ({ page, env }) => {
     expect(msg).toBe(testData.email_toast_error_message);
   });
 
-
 // ❌ CASE 3 – PASSWORD < 6 KÝ TỰ
    test("Register unsuccessfully when password is less than 6 characters", async ({ registerPage, homePage, page }) => {
     await homePage.click_Menu_Account_Link();

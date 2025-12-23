@@ -48,4 +48,29 @@ export class LoginPage extends BasePage {
     // Gọi lại hàm ở BasePage
     await this.expectExactURL('http://live.techpanda.org/index.php/customer/account/');
   }
+
+ async getFieldError(field: string) {
+    return this.getElementText(LoginPageUI.fieldError(field));
+  }
+
+  async getEmailFormatError() {
+    return this.getElementText(LoginPageUI.emailFormatError);
+  }
+
+  async getLoginFailedMessage() {
+    return this.getElementText(LoginPageUI.loginFailedMessage);
+
+  }
+async getEmailToastError() {
+   // return this.getAttribute(LoginPageUI.emailField, "validationMessage");
+    // 1. Lấy ra locator của ô Email
+    const emailLocator = this.page.locator(LoginPageUI.emailField);
+    // 2. Dùng evaluate để lấy property "validationMessage" từ element
+    // Thêm "as HTMLInputElement" vào sau biến ele
+    const message = await emailLocator.evaluate((ele) => (ele as HTMLInputElement).validationMessage);
+    return message;
+
+  }
+
+
 }
