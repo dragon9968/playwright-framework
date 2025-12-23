@@ -10,8 +10,8 @@
   "wrong_password": "abcdef",
 
   "required_error": "This is a required field.",
-  "email_toast_error_message1": "Please enter a part following '@'. 'long@' is incomplete.",
-  "email_toast_error_message2": "Please enter a part following '@'. 'long@' is incomplete.",
-  "email_format_error": "Please enter a valid email address (Ex: johndoe@domain.com).",
+  "email_toast_error_case1": "Please include an '@' in the email address. 'long' is missing an '@'.",
+  "email_toast_error_case2": "Please enter a part following '@'. 'long@' is incomplete.",
+  "email_format_error_case3": "Please enter a valid email address. For example johndoe@domain.com.",
   "login_failed_message": "Invalid login or password."
 }

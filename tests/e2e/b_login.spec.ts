@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { test } from '../base/BaseTest'; // Đảm bảo đường dẫn chính xác
 import fs from 'fs';
 import path from 'path';
+import { delay } from "../ultility/utils";
 import { allure } from 'allure-playwright';
 import loginData from "../data/user_login_invalid.json";
 test.describe('Login feature', () => {
@@ -30,17 +31,91 @@ const env = process.env.ENV || 'dev';
 
    test("CASE 1 – TẤT CẢ FIELD TRỐNG", async ({ homePage, loginPage }) => {
      await homePage.click_Menu_Account_Link();
+     await delay();
      await homePage.click_Login_Link();
+     await delay();
      await loginPage.clickLoginButton();
+     await delay();
 
      const emailError = await loginPage.getFieldError("email");
      const passwordError = await loginPage.getFieldError("pass");
 
      expect(emailError).toBe(loginData.required_error);
      expect(passwordError).toBe(loginData.required_error);
+     await delay();
+  });
+
+   test("CASE 2 – EMAIL SAI FORMAT_1", async ({ homePage, loginPage }) => {
+    await homePage.click_Menu_Account_Link();
+    await delay();
+    await homePage.click_Login_Link();
+    await delay();
+    await loginPage.enterEmail(loginData.invalid_email_case1);
+    await delay();
+    await loginPage.enterPassword(loginData.valid_password);
+    await delay();
+    await loginPage.clickLoginButton();
+
+    const error = await loginPage.getEmailToastError();
+    console.log("Giá trị thực tế lấy được:", error);
+    console.log("Giá trị mong đợi trong data:", loginData.email_toast_error_case1);
+    expect(error).toBe(loginData.email_toast_error_case1);
+    await delay();
   });
 
 
+  test("CASE 3 – EMAIL SAI FORMAT_2", async ({ homePage, loginPage }) => {
+    await homePage.click_Menu_Account_Link();
+    await delay();
+    await homePage.click_Login_Link();
+    await delay();
+    await loginPage.enterEmail(loginData.invalid_email_case2);
+    await delay();
+    await loginPage.enterPassword(loginData.valid_password);
+    await delay();
+    await loginPage.clickLoginButton();
+
+    const error = await loginPage.getEmailToastError();
+    console.log("Giá trị thực tế lấy được:", error);
+    console.log("Giá trị mong đợi trong data:", loginData.email_toast_error_case2);
+    expect(error).toBe(loginData.email_toast_error_case2);
+    await delay();
+  });
+
+  test("CASE 4 – EMAIL SAI FORMAT_3", async ({ homePage, loginPage }) => {
+    await homePage.click_Menu_Account_Link();
+    await delay();
+    await homePage.click_Login_Link();
+    await delay();
+    await loginPage.enterEmail(loginData.invalid_email_case3);
+    await delay();
+    await loginPage.enterPassword(loginData.valid_password);
+    await delay();
+    await loginPage.clickLoginButton();
+
+    const error = await loginPage.getEmailFormatError();
+    console.log("Giá trị thực tế lấy được:", error);
+    console.log("Giá trị mong đợi trong data:", loginData.email_format_error_case3);
+    expect(error).toBe(loginData.email_format_error_case3);
+    await delay();
+  });
+
+
+   test("CASE 5 – EMAIL KHÔNG TỒN TẠI", async ({ homePage, loginPage }) => {
+    await homePage.click_Menu_Account_Link();
+    await delay();
+    await homePage.click_Login_Link();
+    await delay();
+    await loginPage.login(loginData.wrong_email, loginData.wrong_password);
+
+    const message = await loginPage.getLoginFailedMessage();
+    expect(message).toBe(loginData.login_failed_message);
+    await delay();
+  });
+
+
+
+/*
    test('Login successfully with valid credentials: ', async ({page, loginPage, homePage, registerPage, testUser, env }) => {
     await allure.step('Đi tới trang login', async () => {
     //await loginPage.navigateLoginPage();

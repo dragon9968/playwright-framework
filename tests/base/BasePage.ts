@@ -1,4 +1,4 @@
-//BasePage -> Fixtures → Page Object → Page UI  → Tests
+//BasePage -> Base Test -> Fixtures → Page Object → Page UI  → Tests
 import { Page, Locator, expect } from '@playwright/test';
 import { allure } from 'allure-playwright';
 

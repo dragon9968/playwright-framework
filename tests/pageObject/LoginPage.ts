@@ -61,7 +61,16 @@ export class LoginPage extends BasePage {
     return this.getElementText(LoginPageUI.loginFailedMessage);
 
   }
+async getEmailToastError() {
+   // return this.getAttribute(LoginPageUI.emailField, "validationMessage");
+    // 1. Lấy ra locator của ô Email
+    const emailLocator = this.page.locator(LoginPageUI.emailField);
+    // 2. Dùng evaluate để lấy property "validationMessage" từ element
+    // Thêm "as HTMLInputElement" vào sau biến ele
+    const message = await emailLocator.evaluate((ele) => (ele as HTMLInputElement).validationMessage);
+    return message;
 
+  }
 
 
 }
