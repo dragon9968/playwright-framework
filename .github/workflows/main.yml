@@ -1,0 +1,15 @@
+name: Demo CI dau tien
+on: [push] # Khi nào code được push lên thì chạy
+
+jobs:
+  chao-hoi-server:
+    runs-on: ubuntu-latest # Mượn một máy Ubuntu của GitHub
+    steps:
+      - name: Bước 1 - Kích hoạt
+        run: echo "Xin chao! Toi la Robot GitHub Actions."
+      
+      - name: Bước 2 - Kiểm tra code
+        run: echo "Đang kiểm tra code của anh... (giả bộ thôi)"
+      
+      - name: Bước 3 - Kết thúc
+        run: echo "Mọi thứ OK! Sẵn sàng deploy."
