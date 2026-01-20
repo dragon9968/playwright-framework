@@ -1,5 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
+import { HomePageUI } from "../pageUI/HomePageUI";
 
 export class HomePage extends BasePage {
     private menuAccountLink = 'a[data-target-element="#header-account"]';
@@ -21,5 +22,13 @@ export class HomePage extends BasePage {
 
       async click_Logout_Link() {
         await this.clickElement(this.logoutLink);
+      }
+
+      async openCategoryMobile() {
+      await this.goTo("https://live.techpanda.org/index.php/mobile.html");
+      }
+
+      async openFirstProduct() {
+      await this.clickElement(HomePageUI.FIRST_PRODUCT_LINK);
       }
 }

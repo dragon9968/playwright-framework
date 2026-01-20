@@ -38,19 +38,34 @@ export default defineConfig({
     //screenshot: 'on',
     headless: true,
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    video: 'retain-on-failure',
+    bypassCSP: true,
+    ignoreHTTPSErrors: true,
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'] ,       
+        launchOptions: {
+        args: [
+          '--disable-features=InsecureFormWarnings',
+        ],
+      },  
+          },
     },
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { ...devices['Desktop Firefox'] ,
+      ignoreHTTPSErrors: true,
+      launchOptions: {
+        firefoxUserPrefs: {
+          'security.warn_submit_secure_to_insecure': false,
+          'security.warn_submit_insecure': false,
+        },
+      },},
     },
 
     {
