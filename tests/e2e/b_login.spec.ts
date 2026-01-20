@@ -5,6 +5,7 @@ import path from 'path';
 import { delay } from "../ultility/utils";
 import { allure } from 'allure-playwright';
 import loginData from "../data/user_login_invalid.json";
+
 test.describe('Login feature', () => {
   let email: string;
   let password: string;

@@ -46,6 +46,10 @@ export class BasePage {
     await this.page.waitForSelector(selector);
   }
 
+  async waitForVisible(selector: string) {
+    await this.page.waitForSelector(selector);
+  }
+
   async clickElement(selector: string) {
     //await this.page.click(selector);
     await this.page.locator(selector).click();
@@ -206,5 +210,33 @@ export class BasePage {
     return await locator.evaluate((el: any) => el.validationMessage);
   }
 
+  async bypassInsecureFormIfPresent() {
+    const sendAnywayBtn = this.page.getByRole('button', { name: 'Send anyway' });
+
+    if (await sendAnywayBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      console.log('⚠ Detected insecure form, clicking Send anyway');
+      await sendAnywayBtn.click();
+      await this.page.waitForLoadState('domcontentloaded');
+    }
+  }
+
+  async acceptNextDialog() {
+    this.page.once('dialog', async (dialog) => {
+      console.log('Dialog message:', dialog.message());
+      await dialog.accept(); // click Continue
+    });
+  }
+
+  // 👉 HÀM BYPASS POPUP HTML
+  async handleHtmlWarningPopup(
+    popupLocator: string,
+    acceptButtonLocator: string
+  ) {
+    const popup = this.page.locator(popupLocator);
+
+    if (await popup.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await this.page.locator(acceptButtonLocator).click();
+    }
+  }
   
 }

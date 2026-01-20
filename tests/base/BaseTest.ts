@@ -2,6 +2,9 @@ import { test as base, expect, Page, BrowserContext} from '@playwright/test';
 import { RegisterPage } from '../pageObject/RegisterPage';
 import { HomePage } from '../pageObject/HomePage';
 import { LoginPage } from '../pageObject/LoginPage';
+import { ProductPage } from "../pageObject/ProductPage";
+import { CartPage } from "../pageObject/CartPage";
+import { CheckoutPage } from "../pageObject/CheckoutPage";
 import fs from 'fs';
 import path from 'path';
 import { allure } from 'allure-playwright';
@@ -11,12 +14,17 @@ export type EnvConfig = {
   defaultUser: { email: string; password: string };
 };
 
+
 type MyFixtures = {
     homePage: HomePage;
     registerPage: RegisterPage;
     loginPage: LoginPage;
+    productPage: ProductPage;
+    cartPage: CartPage;
+    checkoutPage: CheckoutPage;
     testUser: { email: string; password: string };
     env: EnvConfig;
+    bypassInsecureForm: void;
   };
 
   const readEnvFile = (envName: string): EnvConfig => {
@@ -38,7 +46,29 @@ type MyFixtures = {
     await use(autoLoginFn);
   }
 
+
   export const test = base.extend<MyFixtures>({
+    bypassInsecureForm: async ({ context }, use) => {
+    const handler = async (page) => {
+      try {
+        await page.waitForLoadState('domcontentloaded', { timeout: 3000 });
+
+        const sendAnywayBtn = page.getByRole('button', { name: 'Send anyway' });
+        if (await sendAnywayBtn.isVisible()) {
+          await sendAnywayBtn.click();
+          await page.waitForLoadState('load');
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    context.on('page', handler);
+
+    await use();
+
+    context.off('page', handler);
+  },
   // env fixture: load environments/<env>.json
     env: async ({}, use) => {
     const envName = process.env.ENV || 'dev';
@@ -50,14 +80,30 @@ type MyFixtures = {
       const homePage = new HomePage(page);
       await use(homePage);
     },
+
     registerPage: async ({ page }, use) => {
       const registerPage = new RegisterPage(page);
       await use(registerPage);
     },
+
     loginPage: async ({ page }, use) => {
       const loginPage = new LoginPage(page);
       await use(loginPage);
     },
+
+    productPage: async ({ page }, use) => {
+    await use(new ProductPage(page));
+    },
+
+    cartPage: async ({ page }, use) => {
+    await use(new CartPage(page));
+   },
+
+    checkoutPage: async ({ page }, use) => {
+    await use(new CheckoutPage(page));
+   },
+
+
     // Tạo user động (email random)
   testUser: async ({}, use) => {
     const random = Math.floor(Math.random() * 100000);
