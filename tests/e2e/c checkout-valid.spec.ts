@@ -5,7 +5,7 @@ import path from 'path';
 import { delay } from "../ultility/utils";
 import { checkoutData } from "../data/checkout.data";
 
-test("Guest Checkout flow – success", async ({
+test("@known-bug Guest Checkout flow – success", async ({
   homePage,
   productPage,
   cartPage,
