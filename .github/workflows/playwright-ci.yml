@@ -28,7 +28,7 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
+      - name: Run Playwright tests (Chromium only)
         run: npx playwright test --grep-invert @known-bug
 
       - name: Upload Playwright Report
