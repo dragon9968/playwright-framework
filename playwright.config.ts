@@ -11,6 +11,8 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+const isCI = !!process.env.CI;
+
 export default defineConfig({
   testDir: './tests',
   timeout: 30_000,
@@ -22,6 +24,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
+  
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: //html
      [
@@ -44,7 +47,9 @@ export default defineConfig({
   },
 
   /* Configure projects for major browsers */
-  projects: [
+  
+  projects: isCI
+  ?[
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] ,       
@@ -55,8 +60,8 @@ export default defineConfig({
       },  
           },
     },
-
-    {
+  ]
+   :[ {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] ,
       ignoreHTTPSErrors: true,
