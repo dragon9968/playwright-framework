@@ -9,7 +9,11 @@
     "short_password": "123",
     "non_password": "123457",
     "register_error_message": "This is a required field.",
-    "email_toast_error_message": "Please enter a part following '@'. 'longnguyen@' is incomplete.",
+    "email_toast_error_message": {
+          "chromium": "Please enter a part following '@'. 'longnguyen@' is incomplete.",
+          "firefox": "Please enter an email address.",
+          "webkit": "Enter a valid email address."
+           } ,
     "register_success_message": "Thank you for registering with Main Website Store.",
     "password_not_match_error": "Please make sure your passwords match.",
   "password_min_length_error": "Please enter 6 or more characters without leading or trailing spaces."

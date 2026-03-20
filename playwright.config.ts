@@ -27,7 +27,8 @@ export default defineConfig({
   
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: //html
-     [
+     [  
+        ['html'],
          ['list'], // optional, vẫn hiển thị console
          ['allure-playwright']
      ],
@@ -48,7 +49,7 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   
-  projects: isCI
+  projects: isCI // Chạy CI CD Trên GithuB chỉ chạy Chrome
   ?[
     {
       name: 'chromium',
@@ -106,3 +107,34 @@ export default defineConfig({
   //   reuseExistingServer: !process.env.CI,
   // },
 });
+
+// Đoạn khai báo ko dùng CI/CD
+/*
+projects: [
+    {
+      name: 'chromium',
+      use: { 
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--disable-features=InsecureFormWarnings'],
+        },
+      },
+    },
+    {
+      name: 'firefox',
+      use: { 
+        ...devices['Desktop Firefox'],
+        ignoreHTTPSErrors: true, // Vượt rào https
+        launchOptions: {
+          firefoxUserPrefs: {
+            'security.warn_submit_secure_to_insecure': false,
+            'security.warn_submit_insecure': false,
+          },
+        },
+      },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ],*/

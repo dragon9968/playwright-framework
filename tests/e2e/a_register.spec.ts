@@ -9,7 +9,6 @@ import fs from 'fs';
 import path from 'path';
 import { allure } from 'allure-playwright';
 
-
 const generateRandomEmail = (): string => {
   const randomString = Math.random().toString(36).substring(2, 10); // Random alphanumeric string
   return `long_${randomString}@qa.team`;
@@ -27,7 +26,7 @@ test.beforeEach(async ({ page , registerPage, homePage,  env }) => {
 
 test('Open Page', async ({ page, env }) => {
   //await page.goto(envConfig.baseURL);
-  await page.goto(env.baseURL);
+ // await page.goto(env.baseURL);
   // Expect a title "to contain" a substring.
   await expect(page).toHaveTitle(/Home page/);
 });
@@ -48,7 +47,7 @@ test('Open Page', async ({ page, env }) => {
   });
 
 // ❌ CASE 2 – EMAIL INVALID
-  test("Register fail: invalid email format", async ({ registerPage, homePage, page }) => {
+  test("Register fail: invalid email format", async ({ registerPage, homePage, page, browserName }) => {
     await homePage.click_Menu_Account_Link();
     await homePage.click_Register_Link();
     await registerPage.enterFirstname(testData.firstname);
@@ -62,7 +61,19 @@ test('Open Page', async ({ page, env }) => {
     .evaluate((el: any) => el.validationMessage);
      expect(validationMessage).toBe(testData.email_toast_error_message);*/
     const msg = await registerPage.getEmailValidationMessage();
-    expect(msg).toBe(testData.email_toast_error_message);
+    expect(msg).toBe(testData.email_toast_error_message[browserName]);
+  // 2. Viết if/else để check riêng cho từng thằng
+   /* if (browserName === 'firefox') {
+        expect(msg).toBe("Please enter an email address.");
+    } 
+    else if (browserName === 'chromium') {
+        // Chromium (Chrome/Edge) thì dùng lại cái data cũ của anh
+        expect(msg).toBe(testData.email_toast_error_message); 
+    } 
+    else if (browserName === 'webkit') {
+        // Chuẩn bị sẵn cho Safari (nếu team anh có yêu cầu chạy)
+        expect(msg).toBe("Enter a valid email address."); // Lưu ý: Câu này em ví dụ, anh check lại trên Safari thực tế nhé
+    }*/
   });
 
 // ❌ CASE 3 – PASSWORD < 6 KÝ TỰ
