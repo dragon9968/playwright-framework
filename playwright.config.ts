@@ -48,8 +48,37 @@ export default defineConfig({
   },
 
   /* Configure projects for major browsers */
+
+  projects: [
+    {
+      name: 'chromium',
+      use: { 
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--disable-features=InsecureFormWarnings'],
+        },
+      },
+    },
+    {
+      name: 'firefox',
+      use: { 
+        ...devices['Desktop Firefox'],
+        ignoreHTTPSErrors: true, // Vượt rào https
+        launchOptions: {
+          firefoxUserPrefs: {
+            'security.warn_submit_secure_to_insecure': false,
+            'security.warn_submit_insecure': false,
+          },
+        },
+      },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ]
   
-  projects: isCI // Chạy CI CD Trên GithuB chỉ chạy Chrome
+  /*projects: isCI // Chạy CI CD Trên GithuB chỉ chạy Chrome
   ?[
     {
       name: 'chromium',
@@ -98,7 +127,7 @@ export default defineConfig({
     //   name: 'Google Chrome',
     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     // },
-  ],
+  //],
 
   /* Run your local dev server before starting the tests */
   // webServer: {
@@ -137,4 +166,4 @@ projects: [
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
     },
-  ],*/
+  ]*/

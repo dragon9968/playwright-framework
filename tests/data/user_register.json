@@ -12,7 +12,7 @@
     "email_toast_error_message": {
           "chromium": "Please enter a part following '@'. 'longnguyen@' is incomplete.",
           "firefox": "Please enter an email address.",
-          "webkit": "Enter a valid email address."
+          "webkit": "Enter an email address"
            } ,
     "register_success_message": "Thank you for registering with Main Website Store.",
     "password_not_match_error": "Please make sure your passwords match.",

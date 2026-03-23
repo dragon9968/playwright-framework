@@ -46,7 +46,7 @@ const env = process.env.ENV || 'dev';
      await delay();
   });
 
-   test("CASE 2 – EMAIL SAI FORMAT_1", async ({ homePage, loginPage }) => {
+   test("CASE 2 – EMAIL SAI FORMAT_1", async ({ homePage, loginPage, browserName }) => {
     await homePage.click_Menu_Account_Link();
     await delay();
     await homePage.click_Login_Link();
@@ -60,12 +60,12 @@ const env = process.env.ENV || 'dev';
     const error = await loginPage.getEmailToastError();
     console.log("Giá trị thực tế lấy được:", error);
     console.log("Giá trị mong đợi trong data:", loginData.email_toast_error_case1);
-    expect(error).toBe(loginData.email_toast_error_case1);
+    expect(error).toBe(loginData.email_toast_error_case1[browserName]);
     await delay();
   });
 
 
-  test("CASE 3 – EMAIL SAI FORMAT_2", async ({ homePage, loginPage }) => {
+  test("CASE 3 – EMAIL SAI FORMAT_2", async ({ homePage, loginPage, browserName}) => {
     await homePage.click_Menu_Account_Link();
     await delay();
     await homePage.click_Login_Link();
@@ -79,7 +79,7 @@ const env = process.env.ENV || 'dev';
     const error = await loginPage.getEmailToastError();
     console.log("Giá trị thực tế lấy được:", error);
     console.log("Giá trị mong đợi trong data:", loginData.email_toast_error_case2);
-    expect(error).toBe(loginData.email_toast_error_case2);
+    expect(error).toBe(loginData.email_toast_error_case2[browserName]);
     await delay();
   });
 
