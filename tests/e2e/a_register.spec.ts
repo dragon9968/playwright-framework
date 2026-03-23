@@ -26,7 +26,7 @@ test.beforeEach(async ({ page , registerPage, homePage,  env }) => {
 
 test('Open Page', async ({ page, env }) => {
   //await page.goto(envConfig.baseURL);
- // await page.goto(env.baseURL);
+  // await page.goto(env.baseURL);
   // Expect a title "to contain" a substring.
   await expect(page).toHaveTitle(/Home page/);
 });
@@ -36,7 +36,6 @@ test('Open Page', async ({ page, env }) => {
     await homePage.click_Menu_Account_Link();
     await homePage.click_Register_Link();
     await registerPage.clickRegisterButton();
-
     //const error = await registerPage.getFieldError("firstname");
     expect(await registerPage.getFieldError("firstname")).toBe(testData.register_error_message);
     expect(await registerPage.getFieldError("lastname")).toBe(testData.register_error_message);
