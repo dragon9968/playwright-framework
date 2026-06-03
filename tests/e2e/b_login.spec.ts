@@ -116,8 +116,8 @@ const env = process.env.ENV || 'dev';
 
 
 
-/*
-   test('Login successfully with valid credentials: ', async ({page, loginPage, homePage, registerPage, testUser, env }) => {
+
+   test('CASE 6 – LOGIN THÀNH CÔNG VỚI TÀI KHOẢN HỢP LỆ', async ({page, loginPage, homePage, registerPage, testUser, env }) => {
     await allure.step('Đi tới trang login', async () => {
     //await loginPage.navigateLoginPage();
     //await loginPage.navigateTo(envConfig.baseURL);

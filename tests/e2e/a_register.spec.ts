@@ -9,6 +9,10 @@ import fs from 'fs';
 import path from 'path';
 import { allure } from 'allure-playwright';
 
+// DÒNG BÙA CHÚ: Ép Playwright KHÔNG dùng "login session" cho riêng file này.
+// Trình duyệt sẽ mở lên ở trạng thái trắng bóc (như ẩn danh).
+test.use({ storageState: { cookies: [], origins: [] } });
+
 const generateRandomEmail = (): string => {
   const randomString = Math.random().toString(36).substring(2, 10); // Random alphanumeric string
   return `long_${randomString}@qa.team`;
@@ -19,6 +23,8 @@ const env = process.env.ENV || 'dev';
   const envConfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, `../environments/${env}.json`), 'utf8')
   );*/
+
+test.describe.configure({ mode: 'parallel' });
 
 test.beforeEach(async ({ page , registerPage, homePage,  env }) => {
       await registerPage.goTo(env.baseURL);
@@ -32,7 +38,7 @@ test('Open Page', async ({ page, env }) => {
 });
 
 // ❌ CASE 1 – TẤT CẢ FIELD ĐỂ TRỐNG
-  test("Register fail: all fields empty", async ({ registerPage, homePage, env }) => {
+  test.only("Register fail: all fields empty", async ({ registerPage, homePage, env }) => {
     await homePage.click_Menu_Account_Link();
     await homePage.click_Register_Link();
     await registerPage.clickRegisterButton();
@@ -46,9 +52,17 @@ test('Open Page', async ({ page, env }) => {
   });
 
 // ❌ CASE 2 – EMAIL INVALID
-  test("Register fail: invalid email format", async ({ registerPage, homePage, page, browserName }) => {
-    await homePage.click_Menu_Account_Link();
+  test.only("Register fail: invalid email format", async ({ registerPage, homePage, page, browserName }) => {
+    // BƯỚC 1: Bấm Menu Account 
+    await test.step('1. Bấm vào Menu Account', async () => {
+    await homePage.click_Menu_Account_Link(); 
+    })
+    // BƯỚC 2: Bấm vào Register Link
+    await test.step('2. Bấm vào Register Link', async () => {
     await homePage.click_Register_Link();
+    })    
+    // BƯỚC 3: Nhập thông tin hợp lệ vào tất cả các field, riêng email nhập sai định dạng 
+    await test.step('3. Nhập thông tin hợp lệ vào tất cả các field, riêng email nhập sai định dạng', async () => {
     await registerPage.enterFirstname(testData.firstname);
     await registerPage.enterMiddlename(testData.middlename);
     await registerPage.enterLastname(testData.lastname);
@@ -61,6 +75,7 @@ test('Open Page', async ({ page, env }) => {
      expect(validationMessage).toBe(testData.email_toast_error_message);*/
     const msg = await registerPage.getEmailValidationMessage();
     expect(msg).toBe(testData.email_toast_error_message[browserName]);
+    })
   // 2. Viết if/else để check riêng cho từng thằng
    /* if (browserName === 'firefox') {
         expect(msg).toBe("Please enter an email address.");
@@ -89,6 +104,7 @@ test('Open Page', async ({ page, env }) => {
   const error = await registerPage.getMinLengthPasswordError();
   expect(error).toBe(testData.password_min_length_error);
 });
+
 
 
 // ❌ CASE 4 – PASSWORD & CONFIRM PASSWORD KHÔNG TRÙNG

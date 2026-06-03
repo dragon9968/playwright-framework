@@ -5,6 +5,7 @@ import { LoginPage } from '../pageObject/LoginPage';
 import { ProductPage } from "../pageObject/ProductPage";
 import { CartPage } from "../pageObject/CartPage";
 import { CheckoutPage } from "../pageObject/CheckoutPage";
+import { MobilePage } from '../pageObject/MobilePage';
 import fs from 'fs';
 import path from 'path';
 import { allure } from 'allure-playwright';
@@ -22,6 +23,7 @@ type MyFixtures = {
     productPage: ProductPage;
     cartPage: CartPage;
     checkoutPage: CheckoutPage;
+    mobilePage: MobilePage;
     testUser: { email: string; password: string };
     env: EnvConfig;
     bypassInsecureForm: void;
@@ -102,6 +104,10 @@ type MyFixtures = {
     checkoutPage: async ({ page }, use) => {
     await use(new CheckoutPage(page));
    },
+
+   mobilePage: async ({ page }, use) => {
+        await use(new MobilePage(page));
+    },
 
 
     // Tạo user động (email random)

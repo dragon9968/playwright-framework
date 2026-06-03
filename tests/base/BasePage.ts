@@ -17,23 +17,32 @@ export class BasePage {
   
   
   // Hàm chụp screenshot ở từng step, nếu viết hàm riêng ở file auto-step.ts thì ko cần dùng ở đây nữa
-  async step(message: string, action: () => Promise<void>) {
-  await allure.step(message, async () => {
-    try {
-      await action();
+  async step<T>(message: string, action: () => Promise<T>): Promise<T> {
+        // 1. Tạo một cái "giỏ" trống ở bên ngoài hàm allure
+        let result: T; 
 
-      // Screenshot ALWAYS
-      const img = await this.page.screenshot();
-      await allure.attachment(`Screenshot - ${message}`, img, "image/png");
+        // 2. Chạy allure.step (không cần nó return gì cả, chiều ý nó là void)
+        await allure.step(message, async () => {
+            try {
+                // Hứng kết quả vào cái "giỏ" đã tạo ở ngoài
+                result = await action(); 
+                
+                // Screenshot ALWAYS
+                const img = await this.page.screenshot();
+                await allure.attachment(`Screenshot - ${message}`, img, "image/png");
+                
+            } catch (error) {
+                // Screenshot on FAIL
+                const img = await this.page.screenshot();
+                await allure.attachment(`Error Screenshot - ${message}`, img, "image/png");
+                throw error;
+            }
+        });
 
-    } catch (error) {
-      // Screenshot on FAIL
-      const img = await this.page.screenshot();
-      await allure.attachment(`Screenshot FAILED - ${message}`, img, "image/png");
-      throw error;
+        // 3. Trả về cái giỏ đã chứa đồ (Lúc này đã thoát ra khỏi phạm vi của allure.step)
+        // Chữ "!" để báo cho TypeScript biết chắc chắn biến này sẽ có dữ liệu
+        return result!; 
     }
-  });
-}
 
 
   // ===== Hành động cơ bản =====
@@ -149,7 +158,7 @@ export class BasePage {
 // ===== Điều hướng và xử lý trang =====
 
   async navigateTo(url: string) {
-    await allure.step(`Đi đến: ${url}`, async () => {
+    await allure.step(`Chuyển hướng đến trang: ${url}`, async () => {
     await this.page.goto(url);
         });
   }
@@ -238,5 +247,16 @@ export class BasePage {
       await this.page.locator(acceptButtonLocator).click();
     }
   }
+
+
+  // 1. Hàm bọc hành động LẤY TOÀN BỘ TEXT của một danh sách phần tử
+    async getAllInnerTexts(selector: string, stepMessage: string): Promise<string[]> {
+        return await this.step(stepMessage, async () => {
+            const elements = this.page.locator(selector);
+            const texts = await elements.allInnerTexts();
+            // Tiện tay anh em mình tự động trim() sạch khoảng trắng cho toàn bộ mảng luôn
+            return texts.map(text => text.trim()); 
+        });
+    }
   
 }

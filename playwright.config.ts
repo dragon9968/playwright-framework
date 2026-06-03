@@ -17,7 +17,7 @@ export default defineConfig({
   testDir: './tests',
   timeout: 30_000,
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
@@ -28,14 +28,14 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: //html
      [  
-        ['html'],
+        ['html'], // Mở báo cáo HTML sau khi chạy xong
          ['list'], // optional, vẫn hiển thị console
          ['allure-playwright']
      ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://live.techpanda.org/index.php',
+    baseURL: 'http://live.techpanda.org/index.php/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -50,14 +50,33 @@ export default defineConfig({
   /* Configure projects for major browsers */
 
   projects: [
+
+    //BƯỚC A: Định nghĩa project Setup (chạy đầu tiên)
+    {
+      name: 'auth-ui',
+      testMatch: '**/auth.setup.ts'
+    },
+
+    // 1. Dự án chạy Setup bằng API (Chạy ngầm, siêu nhanh)
+    {
+      name: 'auth-api',
+    testMatch: '**/auth-api.setup.ts', // Chỉ hướng vào file setup API mới viết
+    },
+
+    // 2. Dự án chạy E2E UI trên Chrome (Hưởng sái cookie từ file user.json do API tạo ra)
     {
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
+       // storageState: 'playwright/.auth/user.json',
+        ignoreHTTPSErrors: true,
         launchOptions: {
-          args: ['--disable-features=InsecureFormWarnings'],
+         args: ['--disable-features=InsecureFormWarnings', // Thuốc giải của Chrome
+               '--unsafely-treat-insecure-origin-as-secure=http://live.techpanda.org',
+               '--disable-web-security']
         },
       },
+    // dependencies: ['auth-api'],
     },
     {
       name: 'firefox',
@@ -66,8 +85,11 @@ export default defineConfig({
         ignoreHTTPSErrors: true, // Vượt rào https
         launchOptions: {
           firefoxUserPrefs: {
-            'security.warn_submit_secure_to_insecure': false,
+'            security.warn_submit_secure_to_insecure': false,
             'security.warn_submit_insecure': false,
+            // Tắt cảnh báo màu đỏ dưới ô nhập password
+            'security.insecure_field_warning.contextual.enabled': false,
+            'dom.security.https_only_mode': false, // Tắt HTTPS-Only Mode nếu đang bật
           },
         },
       },
