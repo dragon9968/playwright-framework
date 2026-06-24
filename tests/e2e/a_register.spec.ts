@@ -24,7 +24,7 @@ const env = process.env.ENV || 'dev';
   fs.readFileSync(path.join(__dirname, `../environments/${env}.json`), 'utf8')
   );*/
 
-test.describe.configure({ mode: 'parallel' });
+//test.describe.configure({ mode: 'parallel' });
 
 test.beforeEach(async ({ page , registerPage, homePage,  env }) => {
       await registerPage.goTo(env.baseURL);
@@ -140,10 +140,8 @@ test('Register successfully with valid credentials', async ({ page, registerPage
   await registerPage.goTo(env.baseURL);
   //await registerPage.navigateToRegisterPage();
   });
-
   //await page.getByRole('link', { name: 'Account', exact: true }). click();
   //await page.getByRole('link', { name: 'Register' }). click();
-
   await allure.step('Bấm vào Menu Account', async () => {
   await homePage.click_Menu_Account_Link();
   });
@@ -151,16 +149,6 @@ test('Register successfully with valid credentials', async ({ page, registerPage
   await allure.step('Bấm vào nút Register', async () => {
   await homePage.click_Register_Link();
   });
-
-/*   await page.fill('input#firstname','long');
-  await page.fill('input#middlename','long');
-  await page.fill('input#lastname','long');
-  await page.fill('input[id="email_address"]',randomEmail);
-  await page.fill('input#password','123456');
-  await page.fill('input#confirmation','123456');
-  await page.check('input#is_subscribed');
-  await page.getByRole('button', { name: 'Register' }). click(); */
-  //await registerPage.register('long','dinh','nguyen',randomEmail,'123456','123456');
 
   await allure.step('Nhập các thông tin hợp lê vào form đăng kí', async () => {
   await registerPage.register(testData.firstname, testData.middlename, testData.lastname,randomEmail, password, confirm_password);

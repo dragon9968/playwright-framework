@@ -84,4 +84,8 @@ export class MobilePage extends BasePage {
     async getSonyXperiaPriceInDetail(): Promise<string> {
         return await this.getElementText(MobilePageUI.DETAIL_PAGE_SONY_PRICE);
     }
+
+    async clickAddToCartSonyXperia() {
+        await this.page.locator(MobilePageUI.ADD_TO_CART_SONY_XPERIA_BUTTON).click();
+}
 }

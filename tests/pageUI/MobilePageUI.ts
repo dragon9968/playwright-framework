@@ -27,7 +27,9 @@ export class MobilePageUI {
     // Trang chi tiết (Detail Page)
     public static readonly DETAIL_PAGE_SONY_PRICE = "span.price";
 
-
+    // Shopping Actions
+    public static readonly ADD_TO_CART_SONY_XPERIA_BUTTON = 'li.item:has-text("Sony Xperia") button[title="Add to Cart"]';
+    // hoặc tương đương với ADD_TO_CART_SONY_XPERIA_BUTTON = 'li.item:has(a[title="Sony Xperia"]) button[title="Add to Cart"]'
 
 }
  

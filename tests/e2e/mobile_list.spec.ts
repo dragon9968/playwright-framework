@@ -57,7 +57,7 @@ test.describe('Mobile Product List Feature', () => {
         expect(await mobilePage.isProductDescriptionVisible()).toBeTruthy();
     });
 
-    test.only('TC_04: Verify that cost of product in list page and details page are equal', async ({ mobilePage }) => {
+    test('TC_04: Verify that cost of product in list page and details page are equal', async ({ mobilePage }) => {
     
     // Step 1: Click on Mobile menu (để chắc chắn đang ở trang List)
     await test.step('Step 1: Click on Mobile menu', async () => {   

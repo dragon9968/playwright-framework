@@ -68,7 +68,7 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
-       // storageState: 'playwright/.auth/user.json',
+        storageState: 'playwright/.auth/user.json',
         ignoreHTTPSErrors: true,
         launchOptions: {
          args: ['--disable-features=InsecureFormWarnings', // Thuốc giải của Chrome
@@ -76,7 +76,7 @@ export default defineConfig({
                '--disable-web-security']
         },
       },
-    // dependencies: ['auth-api'],
+    dependencies: ['auth-ui'],
     },
     {
       name: 'firefox',
