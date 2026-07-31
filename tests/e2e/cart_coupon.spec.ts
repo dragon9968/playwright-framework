@@ -30,4 +30,39 @@ test.describe('Cart & Coupon Code Feature', () => {
         expect(discountAmount).toBe('-$5.00');
         expect(grandTotal).toBe('$95.00');
     });
+
+    test('TC_06: Verify Error Message for Invalid Coupon Code', async ({ mobilePage, cartPage }) => {
+        // Step 2: Click on 'Mobile' menu and add Sony Xperia to cart
+        await mobilePage.clickAddToCartSonyXperia();
+
+        // Step 3: Enter invalid Coupon code
+        await cartPage.enterCouponCode('INVALID');
+        await cartPage.clickApplyCoupon();
+
+        // Step 4: Verify the error message
+        const errorMsg = await cartPage.getErrorMessage();
+        expect(errorMsg).toContain('The coupon code "INVALID" is not valid.');
+    });
+
+    test('TC_07: Verify Error Message for Invalid Quantity', async ({ mobilePage, cartPage }) => {
+        // Step 2: Click on 'Mobile' menu and add Sony Xperia to cart
+        await mobilePage.clickAddToCartSonyXperia();    
+        // Step 3: Enter invalid quantity (e.g., 501) and click Update
+        await cartPage.enterQuantity('501');
+        await cartPage.clickUpdate();
+        // Step 4: Verify the error message
+        const errorQtyMsg = await cartPage.getQuantityErrorMessage();
+        expect(errorQtyMsg).toContain('The maximum quantity allowed for purchase is 500.');
+
+        const errorMsg = await cartPage.getErrorMessage();
+        expect(errorMsg).toContain('Some of the products cannot be ordered in requested quantity.');
+        
+        // Step 5: Click on "Empty Cart" button
+        await cartPage.clickEmptyCart();
+        // Step 6: Verify the cart is empty
+        const emptyCartMsg = await cartPage.getEmptyCartMessage();
+        expect(emptyCartMsg).toContain('You have no items in your shopping cart.');
+      
+        
+    });
 });

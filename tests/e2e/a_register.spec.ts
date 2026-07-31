@@ -11,7 +11,7 @@ import { allure } from 'allure-playwright';
 
 // DÒNG BÙA CHÚ: Ép Playwright KHÔNG dùng "login session" cho riêng file này.
 // Trình duyệt sẽ mở lên ở trạng thái trắng bóc (như ẩn danh).
-test.use({ storageState: { cookies: [], origins: [] } });
+//test.use({ storageState: { cookies: [], origins: [] } });
 
 const generateRandomEmail = (): string => {
   const randomString = Math.random().toString(36).substring(2, 10); // Random alphanumeric string
@@ -23,7 +23,6 @@ const env = process.env.ENV || 'dev';
   const envConfig = JSON.parse(
   fs.readFileSync(path.join(__dirname, `../environments/${env}.json`), 'utf8')
   );*/
-
 //test.describe.configure({ mode: 'parallel' });
 
 test.beforeEach(async ({ page , registerPage, homePage,  env }) => {
@@ -38,7 +37,7 @@ test('Open Page', async ({ page, env }) => {
 });
 
 // ❌ CASE 1 – TẤT CẢ FIELD ĐỂ TRỐNG
-  test.only("Register fail: all fields empty", async ({ registerPage, homePage, env }) => {
+  test("Register fail: all fields empty", async ({ registerPage, homePage, env }) => {
     await homePage.click_Menu_Account_Link();
     await homePage.click_Register_Link();
     await registerPage.clickRegisterButton();
@@ -52,7 +51,7 @@ test('Open Page', async ({ page, env }) => {
   });
 
 // ❌ CASE 2 – EMAIL INVALID
-  test.only("Register fail: invalid email format", async ({ registerPage, homePage, page, browserName }) => {
+  test("Register fail: invalid email format", async ({ registerPage, homePage, page, browserName }) => {
     // BƯỚC 1: Bấm Menu Account 
     await test.step('1. Bấm vào Menu Account', async () => {
     await homePage.click_Menu_Account_Link(); 

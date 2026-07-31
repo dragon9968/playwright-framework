@@ -5,6 +5,9 @@ import path from 'path';
 import { delay } from "../ultility/utils";
 import { allure } from 'allure-playwright';
 import loginData from "../data/user_login_invalid.json";
+// DÒNG BÙA CHÚ: Ép Playwright KHÔNG dùng "login session" cho riêng file này.
+// Trình duyệt sẽ mở lên ở trạng thái trắng bóc (như ẩn danh).
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Login feature', () => {
   let email: string;
