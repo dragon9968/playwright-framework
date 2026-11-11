@@ -1,0 +1,4 @@
+
+--- [POST API] Bắt đầu gửi dữ liệu tạo mới bài viết... ---
+✅ Điểm kiểm tra 1: Status Code chính xác = 201
+✅ Điểm kiểm tra 2: Dữ liệu map khớp hoàn toàn. Bài viết mới có ID tự sinh là: 101

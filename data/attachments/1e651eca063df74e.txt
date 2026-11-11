@@ -1,0 +1,5 @@
+
+--- [GET API] Bắt đầu gọi API lấy thông tin User... ---
+✅ Điểm kiểm tra 1: Status Code chính xác = 200
+✅ Điểm kiểm tra 2: Kiểu dữ liệu trả về chuẩn JSON
+✅ Điểm kiểm tra 3: Ruột JSON trả về chính xác tên User là: Leanne Graham
