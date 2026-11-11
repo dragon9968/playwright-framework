@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
 import { MobilePageUI } from '../pageUI/MobilePageUI';
-import { PageUrl } from '../constants/PageUrl'; 
+import { PageUrl } from '../constants/PageUrl';
 
 export class MobilePage extends BasePage {
     constructor(page: Page) {
@@ -9,27 +9,27 @@ export class MobilePage extends BasePage {
     }
 
     async goToMobilePage() {
-       await this.navigateTo(PageUrl.MOBILE);
+        await this.navigateTo(PageUrl.MOBILE);
     }
 
     async selectSortBy(option: 'Name' | 'Price') {
         // Dùng .first() để chỉ chọn cái dropdown ở trên cùng
         await this.page.locator(MobilePageUI.SORT_BY_DROPDOWN).first().selectOption({ label: option });
         // Chờ web load lại sau khi sort
-        await this.page.waitForLoadState('networkidle'); 
+        await this.page.waitForLoadState('networkidle');
     }
 
-   /* async getProductNames(): Promise<string[]> {
-        // Lấy tất cả tên sản phẩm trên màn hình gom thành 1 mảng
-        const names = await this.page.locator(MobilePageUI.PRODUCT_NAMES).allInnerTexts();
-        // Trả về mảng đã được xóa khoảng trắng dư thừa
-        return names.map(name => name.trim());
-    }*/
+    /* async getProductNames(): Promise<string[]> {
+         // Lấy tất cả tên sản phẩm trên màn hình gom thành 1 mảng
+         const names = await this.page.locator(MobilePageUI.PRODUCT_NAMES).allInnerTexts();
+         // Trả về mảng đã được xóa khoảng trắng dư thừa
+         return names.map(name => name.trim());
+     }*/
 
     // Nếu gọi hàm allInnerTexts ở BasePage thì sẽ viết như thế này
-     async getProductNames(): Promise<string[]> {
-         return await this.getAllInnerTexts(MobilePageUI.PRODUCT_NAMES, "Lấy danh sách tên sản phẩm trên màn hình");
-     }
+    async getProductNames(): Promise<string[]> {
+        return await this.getAllInnerTexts(MobilePageUI.PRODUCT_NAMES, "Lấy danh sách tên sản phẩm trên màn hình");
+    }
 
     async getProductPrices(): Promise<number[]> {
         const pricesText = await this.page.locator(MobilePageUI.PRODUCT_PRICES).allInnerTexts();
@@ -37,9 +37,20 @@ export class MobilePage extends BasePage {
         return pricesText.map(price => parseFloat(price.replace('$', '').replace(',', '')));
     }
 
+    async ensureGridView(): Promise<void> {
+        const gridBtn = this.page.locator(MobilePageUI.VIEW_AS_GRID).first();
+        // Nếu thấy nút Grid đang là dạng link (tức là trang đang bị ở dạng List)
+        if (await gridBtn.isVisible()) {
+            await gridBtn.click();
+            await this.page.waitForLoadState('domcontentloaded');
+        }
+    }
+
     async clickListView() {
+        // Luôn đảm bảo xuất phát điểm là Grid trước khi test tính năng chuyển sang List
+        await this.ensureGridView();
         await this.page.locator(MobilePageUI.VIEW_AS_LIST).first().click();
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
     }
 
     async isListViewDisplayed(): Promise<boolean> {
@@ -77,7 +88,11 @@ export class MobilePage extends BasePage {
 
     // Click vào tên sản phẩm để vào trang Detail
     async clickSonyXperiaDetail() {
+        // Bỏ noWaitAfter đi để Playwright tự động chờ phản hồi chuyển trang tự nhiên
         await this.clickElement(MobilePageUI.LIST_PAGE_SONY_NAME_LINK);
+
+        // Đợi cho đến khi phần tử giá của trang Detail thực sự hiển thị
+        await this.waitForElementVisible(MobilePageUI.DETAIL_PAGE_SONY_PRICE);
     }
 
     // Lấy giá trị của Sony Xperia ở trang Detail
@@ -87,5 +102,5 @@ export class MobilePage extends BasePage {
 
     async clickAddToCartSonyXperia() {
         await this.page.locator(MobilePageUI.ADD_TO_CART_SONY_XPERIA_BUTTON).click();
-}
+    }
 }

@@ -1,4 +1,4 @@
-import { test } from '../base/BaseTest'; // Đảm bảo đường dẫn chính xác
+import { test } from '../../base/BaseTest'; // Đảm bảo đường dẫn chính xác
 
 import { expect } from '@playwright/test';
 

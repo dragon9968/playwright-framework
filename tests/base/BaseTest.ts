@@ -1,134 +1,119 @@
-import { test as base, expect, Page, BrowserContext} from '@playwright/test';
+import { test as base, expect, Page, BrowserContext } from '@playwright/test';
 import { RegisterPage } from '../pageObject/RegisterPage';
 import { HomePage } from '../pageObject/HomePage';
 import { LoginPage } from '../pageObject/LoginPage';
-import { ProductPage } from "../pageObject/ProductPage";
-import { CartPage } from "../pageObject/CartPage";
-import { CheckoutPage } from "../pageObject/CheckoutPage";
+import { ProductPage } from '../pageObject/ProductPage';
+import { CartPage } from '../pageObject/CartPage';
 import { MobilePage } from '../pageObject/MobilePage';
+import { MobilePage_getByRole } from '../pageObject/MobilePage_getByRole';
 import fs from 'fs';
 import path from 'path';
-import { allure } from 'allure-playwright';
 
 export type EnvConfig = {
   baseURL: string;
   defaultUser: { email: string; password: string };
 };
 
-
 type MyFixtures = {
-    homePage: HomePage;
-    registerPage: RegisterPage;
-    loginPage: LoginPage;
-    productPage: ProductPage;
-    cartPage: CartPage;
-    checkoutPage: CheckoutPage;
-    mobilePage: MobilePage;
-    testUser: { email: string; password: string };
-    env: EnvConfig;
-    bypassInsecureForm: void;
-  };
+  homePage: HomePage;
+  registerPage: RegisterPage;
+  loginPage: LoginPage;
+  productPage: ProductPage;
+  cartPage: CartPage;
+  mobilePage: MobilePage;
+  mobilePage_getByRole: MobilePage_getByRole;
+  testUser: { email: string; password: string };
+  env: EnvConfig;
+  autoLogin: () => Promise<void>;
+  bypassInsecureForm: void;
+};
 
-  const readEnvFile = (envName: string): EnvConfig => {
+const readEnvFile = (envName: string): EnvConfig => {
   const p = path.join(__dirname, `../environments/${envName}.json`);
   if (!fs.existsSync(p)) throw new Error(`Env file not found: ${p}`);
   return JSON.parse(fs.readFileSync(p, 'utf8')) as EnvConfig;
 };
 
-// Auto login function
-  autoLogin: async ({ page, env }, use) => {
-    const autoLoginFn = async () => {
-      await page.goto(env.baseURL);
-      const loginPage = new LoginPage(page);
-      await loginPage.enterEmail(env.default_email);
-      await loginPage.enterPassword(env.default_password);
-      await loginPage.clickLoginButton();
-    };
-
-    await use(autoLoginFn);
-  }
-
-
-  export const test = base.extend<MyFixtures>({
-    bypassInsecureForm: async ({ context }, use) => {
-    const handler = async (page) => {
-      try {
-        await page.waitForLoadState('domcontentloaded', { timeout: 3000 });
-
-        const sendAnywayBtn = page.getByRole('button', { name: 'Send anyway' });
-        if (await sendAnywayBtn.isVisible()) {
-          await sendAnywayBtn.click();
-          await page.waitForLoadState('load');
+export const test = base.extend<MyFixtures>({
+  // 1. Tự động áp dụng cho tất cả test case mà không cần khai báo ở từng test
+  bypassInsecureForm: [
+    async ({ context }, use) => {
+      const handler = async (page: Page) => {
+        try {
+          await page.waitForLoadState('domcontentloaded', { timeout: 3000 });
+          const sendAnywayBtn = page.getByRole('button', { name: 'Send anyway' });
+          if (await sendAnywayBtn.isVisible()) {
+            await sendAnywayBtn.click();
+            await page.waitForLoadState('load');
+          }
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
-      }
-    };
+      };
 
-    context.on('page', handler);
+      context.on('page', handler);
+      await use();
+      context.off('page', handler);
+    },
+    { auto: true },
+  ],
 
-    await use();
-
-    context.off('page', handler);
-  },
-  // env fixture: load environments/<env>.json
-    env: async ({}, use) => {
+  // 2. Load cấu hình môi trường
+  env: async ({}, use) => {
     const envName = process.env.ENV || 'dev';
     const cfg = readEnvFile(envName);
     await use(cfg);
   },
 
-    homePage: async ({ page }, use) => {
-      const homePage = new HomePage(page);
-      await use(homePage);
-    },
-
-    registerPage: async ({ page }, use) => {
-      const registerPage = new RegisterPage(page);
-      await use(registerPage);
-    },
-
-    loginPage: async ({ page }, use) => {
+  // 3. Hàm auto login tiện ích
+  autoLogin: async ({ page, env }, use) => {
+    const autoLoginFn = async () => {
+      await page.goto(env.baseURL);
       const loginPage = new LoginPage(page);
-      await use(loginPage);
-    },
+      await loginPage.enterEmail(env.defaultUser.email);
+      await loginPage.enterPassword(env.defaultUser.password);
+      await loginPage.clickLoginButton();
+    };
+    await use(autoLoginFn);
+  },
 
-    productPage: async ({ page }, use) => {
+  // 4. Các Page Object Fixtures
+  homePage: async ({ page }, use) => {
+    await use(new HomePage(page));
+  },
+
+  registerPage: async ({ page }, use) => {
+    await use(new RegisterPage(page));
+  },
+
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page));
+  },
+
+  productPage: async ({ page }, use) => {
     await use(new ProductPage(page));
-    },
+  },
 
-    cartPage: async ({ page }, use) => {
+  cartPage: async ({ page }, use) => {
     await use(new CartPage(page));
-   },
+  },
 
-    checkoutPage: async ({ page }, use) => {
-    await use(new CheckoutPage(page));
-   },
+  mobilePage: async ({ page }, use) => {
+    await use(new MobilePage(page));
+  },
 
-   mobilePage: async ({ page }, use) => {
-        await use(new MobilePage(page));
-    },
+  mobilePage_getByRole: async ({ page }, use) => {
+    await use(new MobilePage_getByRole(page));
+  },
 
-
-    // Tạo user động (email random)
+  // 5. Fixture tạo user ngẫu nhiên
   testUser: async ({}, use) => {
     const random = Math.floor(Math.random() * 100000);
     const email = `autouser_${random}@testmail.com`;
     const password = 'Password123!';
     await use({ email, password });
   },
+});
 
-  });
-
-  /*// Auto attach screenshot khi FAIL
-  test.afterEach(async ({ page }, testInfo) => {
-  if (testInfo.status !== 'passed') {
-    try {
-      const ss = await page.screenshot({ fullPage: true });
-      await allure.attachment('screenshot', ss, 'image/png');
-    } catch (e) {}
-    // video & trace are handled by reporter/playwright config
-  }
-})*/;
-
-  //export { expect } from '@playwright/test'; // nếu export cái này ở fixture thì ở file test case ko cần import lại cái này nữa
+// Export expect để các file spec chỉ cần import từ BaseTest
+export { expect } from '@playwright/test';

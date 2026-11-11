@@ -9,4 +9,5 @@ test('Check My Product in Cart', async ({ page }) => {
   await expect(welcomeMsg).toContainText('Anh Tester!', { ignoreCase: true });  
   // Tiếp tục test các tính năng Giỏ hàng, Thanh toán...
   await page.getByRole('link', { name: 'CART' }).click();
+  await expect(page.locator('#header-cart p.empty')).toHaveText('You have no items in your shopping cart.');
 });

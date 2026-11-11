@@ -1,0 +1,2483 @@
+﻿
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\base\BasePage.ts ====================
+
+import { Page, Locator, expect } from '@playwright/test';
+import { allure } from 'allure-playwright';
+
+// Äá»‹nh nghÄ©a sáºµn cÃ¡c Role phá»• biáº¿n Ä‘á»ƒ VS Code tá»± Ä‘á»™ng gá»£i Ã½ (IntelliSense)
+type CustomAriaRole =
+  | 'alert' | 'button' | 'checkbox' | 'combobox' | 'dialog' | 'heading'
+  | 'link' | 'listbox' | 'menu' | 'menuitem' | 'option' | 'progressbar'
+  | 'radio' | 'scrollbar' | 'search' | 'slider' | 'spinbutton'
+  | 'status' | 'tab' | 'tabpanel' | 'textbox' | 'tooltip' | 'tree' | string;
+
+export class BasePage {
+  protected page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  // ==========================================
+  // 1. ALLURE STEP WRAPPER (Tá»± Ä‘á»™ng log & chá»¥p áº£nh)
+  // ==========================================
+  // tests/base/BasePage.ts
+  async step<T>(message: string, action: () => Promise<T>): Promise<T> {
+    let result: T;
+    await allure.step(message, async () => {
+      try {
+        result = await action();
+        const img = await this.page.screenshot();
+        await allure.attachment(`Screenshot - ${message}`, img, "image/png");
+      } catch (error) {
+        // Chá»‰ chá»¥p áº£nh náº¿u trang váº«n cÃ²n má»Ÿ (trÃ¡nh lá»—i khi bá»‹ timeout Ä‘Ã³ng browser)
+        try {
+          if (!this.page.isClosed()) {
+            const img = await this.page.screenshot();
+            await allure.attachment(`Error Screenshot - ${message}`, img, "image/png");
+          }
+        } catch {
+          // Bá» qua lá»—i chá»¥p áº£nh khi browser Ä‘Ã£ bá»‹ kill
+        }
+        throw error;
+      }
+    });
+    return result!;
+  }
+
+  // ==========================================
+  // 2. TÃŒM KIáº¾M PHáº¦N Tá»¬ (LOCATORS)
+  // ==========================================
+  getByRole(role: CustomAriaRole, name: string): Locator {
+    return this.page.getByRole(role as any, { name });
+  }
+
+  // ==========================================
+  // 3. HÃ€NH Äá»˜NG CÆ  Báº¢N (ACTIONS)
+  // ==========================================
+  async clickElement(selector: string, options?: { noWaitAfter?: boolean; force?: boolean; clickCount?: number }) {
+    await this.page.locator(selector).click(options);
+  }
+
+  async dblClickElement(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).dblclick(options);
+  }
+
+  async rightClickElement(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).click({ ...options, button: 'right' });
+  }
+
+  async clickElementByRole(role: CustomAriaRole, name: string) {
+    await this.page.getByRole(role as any, { name }).click();
+  }
+
+  async clickByJS(selector: string): Promise<void> {
+    await this.page.locator(selector).evaluate((el: any) => {
+      setTimeout(() => el.click(), 0);
+    });
+  }
+
+  async fillInput(selector: string, value: string) {
+    await this.page.locator(selector).fill(value);
+  }
+
+  async fillInputByRole(role: CustomAriaRole, name: string, value: string) {
+    await this.page.getByRole(role as any, { name }).fill(value);
+  }
+
+  // Thay tháº¿ cho hÃ m type() Ä‘Ã£ bá»‹ Playwright gáº¡ch bá» (deprecated)
+  // GÃµ tá»«ng kÃ½ tá»± má»™t vá»›i Ä‘á»™ trá»… (delay), ráº¥t tá»‘t Ä‘á»ƒ test cÃ¡c Ã´ Search cÃ³ Auto-suggest
+  async typeSequentially(selector: string, value: string, delayMs: number = 100) {
+    await this.page.locator(selector).pressSequentially(value, { delay: delayMs });
+  }
+
+  async clearInput(selector: string) {
+    await this.page.locator(selector).clear();
+  }
+
+  async press(selector: string, key: string) {
+    await this.page.locator(selector).press(key);
+  }
+
+  async hover(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).hover(options);
+  }
+
+  async focus(selector: string) {
+    await this.page.locator(selector).focus();
+  }
+
+  async check(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).check(options);
+  }
+
+  async uncheck(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).uncheck(options);
+  }
+
+  async setChecked(selector: string, checkedState: boolean) {
+    await this.page.locator(selector).setChecked(checkedState);
+  }
+
+  async selectOption(selector: string, value: string) {
+    await this.page.locator(selector).selectOption(value);
+  }
+
+  async uploadFile(selector: string, filePath: string | string[]) {
+    await this.page.locator(selector).setInputFiles(filePath);
+  }
+
+  async dragAndDrop(sourceSelector: string, targetSelector: string) {
+    await this.page.locator(sourceSelector).dragTo(this.page.locator(targetSelector));
+  }
+
+  async scrollIntoView(selector: string) {
+    await this.page.locator(selector).scrollIntoViewIfNeeded();
+  }
+
+  async dispatchEvent(selector: string, type: string) {
+    await this.page.locator(selector).dispatchEvent(type);
+  }
+
+  // ==========================================
+  // 4. Láº¤Y TRáº NG THÃI & Dá»® LIá»†U (GETTERS)
+  // ==========================================
+  async getElementText(selector: string): Promise<string> {
+    return (await this.page.locator(selector).textContent())?.trim() || '';
+  }
+
+  async getAllInnerTexts(selector: string, stepMessage?: string): Promise<string[]> {
+    const action = async () => {
+      const elements = this.page.locator(selector);
+      const texts = await elements.allInnerTexts();
+      return texts.map(text => text.trim());
+    };
+
+    if (stepMessage) {
+      return await this.step(stepMessage, action);
+    }
+    return await action();
+  }
+
+  async getInputValue(selector: string): Promise<string> {
+    return await this.page.locator(selector).inputValue();
+  }
+
+  async getAttribute(selector: string, attr: string): Promise<string | null> {
+    return await this.page.locator(selector).getAttribute(attr);
+  }
+
+  async getCount(selector: string): Promise<number> {
+    return await this.page.locator(selector).count();
+  }
+
+  // CHUáº¨N Má»šI: DÃ¹ng locator().isVisible() thay vÃ¬ page.isVisible()
+  async isVisible(selector: string): Promise<boolean> {
+    return await this.page.locator(selector).isVisible();
+  }
+
+  async isEnabled(selector: string): Promise<boolean> {
+    return await this.page.locator(selector).isEnabled();
+  }
+
+  async isChecked(selector: string): Promise<boolean> {
+    return await this.page.locator(selector).isChecked();
+  }
+
+  // ==========================================
+  // 5. CÆ  CHáº¾ Äá»’NG Bá»˜ CHá»œ Äá»¢I (WAITING STRATEGIES)
+  // ==========================================
+  async waitForElementVisible(selector: string, timeout?: number) {
+    await this.page.locator(selector).waitFor({ state: 'visible', timeout });
+  }
+
+  async waitForElementHidden(selector: string, timeout?: number) {
+    await this.page.locator(selector).waitFor({ state: 'hidden', timeout });
+  }
+
+  async waitForElementAttached(selector: string, timeout?: number) {
+    await this.page.locator(selector).waitFor({ state: 'attached', timeout });
+  }
+
+  async waitForPageLoad(state: 'load' | 'domcontentloaded' | 'networkidle' = 'load') {
+    await this.page.waitForLoadState(state);
+  }
+
+  async wait(ms: number = 1000) {
+    // Chá»‰ dÃ¹ng khi thá»±c sá»± cáº§n thiáº¿t, háº¡n cháº¿ tá»‘i Ä‘a Hard Sleep
+    await this.page.waitForTimeout(ms);
+  }
+
+  // ==========================================
+  // 6. EXPECTATIONS / ASSERTIONS (WEB-FIRST)
+  // ==========================================
+  async expectVisible(selector: string, timeout?: number) {
+    await expect(this.page.locator(selector)).toBeVisible({ timeout });
+  }
+
+  async expectHidden(selector: string, timeout?: number) {
+    await expect(this.page.locator(selector)).toBeHidden({ timeout });
+  }
+
+  async expectText(selector: string, expectedText: string) {
+    await expect(this.page.locator(selector)).toHaveText(expectedText);
+  }
+
+  async expectContainsText(selector: string, expectedText: string) {
+    await expect(this.page.locator(selector)).toContainText(expectedText);
+  }
+
+  async expectValue(selector: string, expectedValue: string) {
+    await expect(this.page.locator(selector)).toHaveValue(expectedValue);
+  }
+
+  async expectAttribute(selector: string, attr: string, expectedValue: string | RegExp) {
+    await expect(this.page.locator(selector)).toHaveAttribute(attr, expectedValue);
+  }
+
+  async expectCount(selector: string, expectedCount: number) {
+    await expect(this.page.locator(selector)).toHaveCount(expectedCount);
+  }
+
+  async expectEnabled(selector: string) {
+    await expect(this.page.locator(selector)).toBeEnabled();
+  }
+
+  async expectDisabled(selector: string) {
+    await expect(this.page.locator(selector)).toBeDisabled();
+  }
+
+  async expectChecked(selector: string, state: boolean = true) {
+    await expect(this.page.locator(selector)).toBeChecked({ checked: state });
+  }
+
+  async expectEmpty(selector: string) {
+    await expect(this.page.locator(selector)).toBeEmpty();
+  }
+
+  async expectExactURL(expectedURL: string) {
+    await expect(this.page).toHaveURL(expectedURL);
+  }
+
+  async expectURLContains(pathPart: string) {
+    await expect(this.page).toHaveURL(new RegExp(pathPart));
+  }
+
+  async expectTitle(title: string | RegExp) {
+    await expect(this.page).toHaveTitle(title);
+  }
+
+  // ==========================================
+  // 7. ÄIá»€U HÆ¯á»šNG & Xá»¬ LÃ TRANG (NAVIGATION & DIALOGS)
+  // ==========================================
+  async navigateTo(url: string) {
+    await allure.step(`Äi tá»›i trang: ${url}`, async () => {
+      await this.page.goto(url);
+    });
+  }
+
+  async reload() {
+    await this.page.reload();
+  }
+
+  async goBack() {
+    await this.page.goBack();
+  }
+
+  async scrollToBottom() {
+    await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  }
+
+  async scrollToTop() {
+    await this.page.evaluate(() => window.scrollTo(0, 0));
+  }
+
+  // Xá»­ lÃ½ Alert / Confirm dialog (Cáº§n gá»i trÆ°á»›c hÃ m click gÃ¢y ra dialog)
+  async acceptNextDialog(promptText?: string) {
+    this.page.once('dialog', async (dialog) => {
+      console.log('Dialog message:', dialog.message());
+      await dialog.accept(promptText);
+    });
+  }
+
+  async dismissNextDialog() {
+    this.page.once('dialog', async (dialog) => {
+      await dialog.dismiss();
+    });
+  }
+
+  // ==========================================
+  // 8. TIá»†N ÃCH Dá»° ÃN (PROJECT UTILITIES)
+  // ==========================================
+  async getValidationMessage(selector: string): Promise<string> {
+    const locator = this.page.locator(selector);
+    return await locator.evaluate((el: HTMLInputElement) => el.validationMessage);
+  }
+
+  async bypassInsecureFormIfPresent() {
+    const sendAnywayBtn = this.page.getByRole('button', { name: 'Send anyway' });
+    if (await sendAnywayBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      console.log('âš  Detected insecure form, clicking Send anyway');
+      await sendAnywayBtn.click();
+      await this.page.waitForLoadState('domcontentloaded');
+    }
+  }
+
+  async handleHtmlWarningPopup(popupSelector: string, acceptBtnSelector: string) {
+    const popup = this.page.locator(popupSelector);
+    if (await popup.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await this.page.locator(acceptBtnSelector).click();
+    }
+  }
+
+  async pause() {
+    await this.page.pause();
+  }
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\base\BaseTest.ts ====================
+
+import { test as base, expect, Page, BrowserContext } from '@playwright/test';
+import { RegisterPage } from '../pageObject/RegisterPage';
+import { HomePage } from '../pageObject/HomePage';
+import { LoginPage } from '../pageObject/LoginPage';
+import { ProductPage } from '../pageObject/ProductPage';
+import { CartPage } from '../pageObject/CartPage';
+import { CheckoutPage } from '../pageObject/CheckoutPage';
+import { MobilePage } from '../pageObject/MobilePage';
+import { MobilePage_getByRole } from '../pageObject/MobilePage_getByRole';
+import fs from 'fs';
+import path from 'path';
+
+export type EnvConfig = {
+  baseURL: string;
+  defaultUser: { email: string; password: string };
+};
+
+type MyFixtures = {
+  homePage: HomePage;
+  registerPage: RegisterPage;
+  loginPage: LoginPage;
+  productPage: ProductPage;
+  cartPage: CartPage;
+  checkoutPage: CheckoutPage;
+  mobilePage: MobilePage;
+  mobilePage_getByRole: MobilePage_getByRole;
+  testUser: { email: string; password: string };
+  env: EnvConfig;
+  autoLogin: () => Promise<void>;
+  bypassInsecureForm: void;
+};
+
+const readEnvFile = (envName: string): EnvConfig => {
+  const p = path.join(__dirname, `../environments/${envName}.json`);
+  if (!fs.existsSync(p)) throw new Error(`Env file not found: ${p}`);
+  return JSON.parse(fs.readFileSync(p, 'utf8')) as EnvConfig;
+};
+
+export const test = base.extend<MyFixtures>({
+  // 1. Tá»± Ä‘á»™ng Ã¡p dá»¥ng cho táº¥t cáº£ test case mÃ  khÃ´ng cáº§n khai bÃ¡o á»Ÿ tá»«ng test
+  bypassInsecureForm: [
+    async ({ context }, use) => {
+      const handler = async (page: Page) => {
+        try {
+          await page.waitForLoadState('domcontentloaded', { timeout: 3000 });
+          const sendAnywayBtn = page.getByRole('button', { name: 'Send anyway' });
+          if (await sendAnywayBtn.isVisible()) {
+            await sendAnywayBtn.click();
+            await page.waitForLoadState('load');
+          }
+        } catch {
+          // ignore
+        }
+      };
+
+      context.on('page', handler);
+      await use();
+      context.off('page', handler);
+    },
+    { auto: true },
+  ],
+
+  // 2. Load cáº¥u hÃ¬nh mÃ´i trÆ°á»ng
+  env: async ({}, use) => {
+    const envName = process.env.ENV || 'dev';
+    const cfg = readEnvFile(envName);
+    await use(cfg);
+  },
+
+  // 3. HÃ m auto login tiá»‡n Ã­ch
+  autoLogin: async ({ page, env }, use) => {
+    const autoLoginFn = async () => {
+      await page.goto(env.baseURL);
+      const loginPage = new LoginPage(page);
+      await loginPage.enterEmail(env.defaultUser.email);
+      await loginPage.enterPassword(env.defaultUser.password);
+      await loginPage.clickLoginButton();
+    };
+    await use(autoLoginFn);
+  },
+
+  // 4. CÃ¡c Page Object Fixtures
+  homePage: async ({ page }, use) => {
+    await use(new HomePage(page));
+  },
+
+  registerPage: async ({ page }, use) => {
+    await use(new RegisterPage(page));
+  },
+
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page));
+  },
+
+  productPage: async ({ page }, use) => {
+    await use(new ProductPage(page));
+  },
+
+  cartPage: async ({ page }, use) => {
+    await use(new CartPage(page));
+  },
+
+  checkoutPage: async ({ page }, use) => {
+    await use(new CheckoutPage(page));
+  },
+
+  mobilePage: async ({ page }, use) => {
+    await use(new MobilePage(page));
+  },
+
+  mobilePage_getByRole: async ({ page }, use) => {
+    await use(new MobilePage_getByRole(page));
+  },
+
+  // 5. Fixture táº¡o user ngáº«u nhiÃªn
+  testUser: async ({}, use) => {
+    const random = Math.floor(Math.random() * 100000);
+    const email = `autouser_${random}@testmail.com`;
+    const password = 'Password123!';
+    await use({ email, password });
+  },
+});
+
+// Export expect Ä‘á»ƒ cÃ¡c file spec chá»‰ cáº§n import tá»« BaseTest
+export { expect } from '@playwright/test';
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\constants\PageUrl.ts ====================
+
+export const PageUrl = {
+    MOBILE: 'mobile.html',
+    // ... sau nÃ y web cÃ³ trang nÃ o anh nhÃ©t háº¿t vÃ o Ä‘Ã¢y
+};
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\data\checkout.data.ts ====================
+
+export const checkoutData = {
+  firstName: "Long",
+  lastName: "Nguyen",
+  email: "longnguyen@example.com",
+  address: "123 Test Street",
+  city: "HCM",
+  zip: "90001",
+  telephone: "0123456789",
+  state: "California"
+};
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\data\user_login.json ====================
+
+{
+  "randomEmail": "long_norj9yd6@qa.team",
+  "password": "123456"
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\data\user_login_invalid.json ====================
+
+{
+  "valid_email": "long_nguyen@qa.team",
+  "valid_password": "123456",
+
+  "invalid_email_case1": "long",
+  "invalid_email_case2": "long@",
+  "invalid_email_case3": "long@qa",
+
+  "wrong_email": "notfound@gmail.com",
+  "wrong_password": "abcdef",
+
+  "required_error": "This is a required field.",
+  "email_toast_error_case1": {
+      "chromium": "Please include an '@' in the email address. 'long' is missing an '@'.",
+      "firefox": "Please enter an email address.",
+      "webkit": "Enter an email address"
+  },
+  "email_toast_error_case2": {
+      "chromium": "Please enter a part following '@'. 'long@' is incomplete.",
+      "firefox": "Please enter an email address.",
+      "webkit": "Enter an email address"
+  },
+ 
+
+  "email_format_error_case3": "Please enter a valid email address. For example johndoe@domain.com.",
+  "login_failed_message": "Invalid login or password."
+}
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\data\user_register.json ====================
+
+{
+    "invalid_email": "longnguyen@",
+    "firstname": "long",
+    "middlename": "dinh",
+    "lastname": "nguyen",
+    "valid_email": "long_nguyen@qa.team",
+    "password": "123456",
+    "confirm_password": "123456",
+    "short_password": "123",
+    "non_password": "123457",
+    "register_error_message": "This is a required field.",
+    "email_toast_error_message": {
+          "chromium": "Please enter a part following '@'. 'longnguyen@' is incomplete.",
+          "firefox": "Please enter an email address.",
+          "webkit": "Enter an email address"
+           } ,
+    "register_success_message": "Thank you for registering with Main Website Store.",
+    "password_not_match_error": "Please make sure your passwords match.",
+  "password_min_length_error": "Please enter 6 or more characters without leading or trailing spaces."
+}
+
+ 
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\API\a_register_api.spec.ts ====================
+
+import { test, expect } from '@playwright/test';
+
+test.use({ storageState: { cookies: [], origins: [] } });
+test('Verify chá»©c nÄƒng ÄÄƒng kÃ½ tÃ i khoáº£n má»›i qua API thÃ nh cÃ´ng', async ({ request }) => {
+  
+  // ðŸŒŸ GIáº¢I PHÃP CHÃ Máº NG: DÃ¹ng Äáº¿m thá»i gian (Date.now()) Ä‘á»ƒ tá»± Ä‘á»™ng sinh Email ngáº«u nhiÃªn
+  // Má»—i láº§n anh báº¥m cháº¡y test, nÃ³ sáº½ táº¡o ra 1 email khÃ¡c nhau, khÃ´ng bao giá» lo bá»‹ trÃ¹ng data
+  const uniqueId = Date.now();
+  const dynamicEmail = `long_api_${uniqueId}@gmail.com`;
+  
+  console.log(`\nðŸš€ --- Báº®T Äáº¦U TEST REGISTER API ---`);
+  console.log(`ðŸ‘‰ Email sá»­ dá»¥ng cho lÆ°á»£t test nÃ y: ${dynamicEmail}`);
+
+  // BÆ¯á»šC 1: Gá»i GET vÃ o trang táº¡o tÃ i khoáº£n Ä‘á»ƒ rÃºt Form Key Ä‘á»™ng
+  console.log('--- [Register API] BÆ°á»›c 1: Gá»i GET Ä‘á»ƒ nháº·t Form Key má»“i... ---');
+  const registerPageResponse = await request.get('/index.php/customer/account/create/');
+  const registerHtml = await registerPageResponse.text();
+
+  const formKeyMatch = registerHtml.match(/name="form_key".*?value="([^"]+)"/) || registerHtml.match(/value="([^"]+)"\s+name="form_key"/);
+  const formKey = formKeyMatch ? formKeyMatch[1] : '';
+  console.log(`   -> Nháº·t Ä‘Æ°á»£c mÃ£ Form Key: ${formKey}`);
+
+  // BÆ¯á»šC 2: Báº¯n request POST gá»­i toÃ n bá»™ dá»¯ liá»‡u Form lÃªn Server
+  console.log('--- [Register API] BÆ°á»›c 2: Gá»­i request POST táº¡o tÃ i khoáº£n... ---');
+  const response = await request.post('/index.php/customer/account/createPost/', {
+    form: {
+      'form_key': formKey,                 // Tháº» thÃ´ng hÃ nh báº£o máº­t
+      'firstname': 'Long',
+      'lastname': 'QA',
+      'email': dynamicEmail,               // Email tá»± Ä‘á»™ng Ä‘á»•i má»›i sau má»—i lÆ°á»£t cháº¡y
+      'password': '123456',          // Máº­t kháº©u
+      'confirmation': '123456',      // Confirm máº­t kháº©u (pháº£i khá»›p)
+    },
+  });
+
+  // BÆ¯á»šC 3: KIá»‚M TRA Káº¾T QUáº¢ TRáº¢ Vá»€ (VERIFY)
+  const finalUrl = response.url();
+  console.log(`--- [Register API] BÆ°á»›c 3: Tiáº¿n hÃ nh Verify káº¿t quáº£... ---`);
+  console.log(`   -> Trang Ä‘Ã­ch cuá»‘i cÃ¹ng Ä‘áº¡t Ä‘Æ°á»£c: ${finalUrl}`);
+
+  // 1. Kiá»ƒm tra xem há»‡ thá»‘ng cÃ³ tá»± Ä‘á»™ng Ä‘Äƒng nháº­p vÃ  Ä‘Ã¡ vá» Ä‘Ãºng trang Dashboard nhÆ° anh yÃªu cáº§u khÃ´ng
+  expect(finalUrl).toBe('http://live.techpanda.org/index.php/customer/account/index/');
+
+  // 2. Äá»c ná»™i dung HTML trang Ä‘Ã­ch Ä‘á»ƒ verify dÃ²ng chá»¯ chÃºc má»«ng ÄÄƒng kÃ½ thÃ nh cÃ´ng cá»§a Magento
+  const htmlContent = await response.text();
+  expect(htmlContent).toContain('Thank you for registering with Main Website Store.');
+
+  console.log(`âœ… Káº¾T QUáº¢: Chá»©c nÄƒng ÄÄƒng kÃ½ qua API hoáº¡t Ä‘á»™ng HOÃ€N Háº¢O!`);
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\API\jsonplaceholder.spec.ts ====================
+
+import { test, expect } from '@playwright/test';
+
+test.describe('Há»c vÃ  Thá»±c hÃ nh Test API vá»›i JSONPlaceholder', () => {
+
+  // Ká»ŠCH Báº¢N 1: TEST API GET USER
+  test('1. Verify API GET - Láº¥y thÃ´ng tin User sá»‘ 1 thÃ nh cÃ´ng', async ({ request }) => {
+    console.log('\n--- [GET API] Báº¯t Ä‘áº§u gá»i API láº¥y thÃ´ng tin User... ---');
+    
+    // Thá»±c hiá»‡n báº¯n request GET
+    const response = await request.get('https://jsonplaceholder.typicode.com/users/1');
+
+    // ðŸŽ¯ CÃC BÆ¯á»šC VERIFY (ASSERTION):
+    
+    // BÆ°á»›c 1: Verify Status Code pháº£i tráº£ vá» lÃ  200 OK
+    expect(response.status()).toBe(200);
+    console.log(`âœ… Äiá»ƒm kiá»ƒm tra 1: Status Code chÃ­nh xÃ¡c = ${response.status()}`);
+
+    // BÆ°á»›c 2: Verify Header tráº£ vá» Ä‘Ãºng Ä‘á»‹nh dáº¡ng JSON
+    const contentType = response.headers()['content-type'];
+    expect(contentType).toContain('application/json');
+    console.log(`âœ… Äiá»ƒm kiá»ƒm tra 2: Kiá»ƒu dá»¯ liá»‡u tráº£ vá» chuáº©n JSON`);
+
+    // BÆ°á»›c 3: Giáº£i nÃ©n JSON vÃ  Verify chi tiáº¿t dá»¯ liá»‡u bÃªn trong ruá»™t
+    const body = await response.json();
+    
+    expect(body.id).toBe(1); // ID báº¯t buá»™c pháº£i lÃ  1
+    expect(body.name).toBe('Leanne Graham'); // TÃªn chuáº©n cá»§a User 1 trÃªn há»‡ thá»‘ng
+    expect(body.email).toBe('Sincere@april.biz'); // Email chuáº©n
+    expect(body.company.name).toBe('Romaguera-Crona'); // TÃªn cÃ´ng ty náº±m trong object lá»“ng nhau
+    
+    console.log(`âœ… Äiá»ƒm kiá»ƒm tra 3: Ruá»™t JSON tráº£ vá» chÃ­nh xÃ¡c tÃªn User lÃ : ${body.name}`);
+  });
+
+
+  // Ká»ŠCH Báº¢N 2: TEST API POST (TAO Má»šI)
+  test('2. Verify API POST - Táº¡o má»›i má»™t bÃ i viáº¿t thÃ nh cÃ´ng', async ({ request }) => {
+    console.log('\n--- [POST API] Báº¯t Ä‘áº§u gá»­i dá»¯ liá»‡u táº¡o má»›i bÃ i viáº¿t... ---');
+
+    // Khai bÃ¡o cá»¥c dá»¯ liá»‡u Payload muá»‘n gá»­i Ä‘i (Y há»‡t cá»¥c JSON trÃªn Postman)
+    const payloadData = {
+      title: 'Anh Tester Pro',
+      body: 'Automation Leader',
+      userId: 1
+    };
+
+    // Thá»±c hiá»‡n báº¯n request POST kÃ¨m dá»¯ liá»‡u á»Ÿ má»¥c 'data'
+    const response = await request.post('https://jsonplaceholder.typicode.com/posts', {
+      data: payloadData
+    });
+
+    // ðŸŽ¯ CÃC BÆ¯á»šC VERIFY (ASSERTION):
+
+    // BÆ°á»›c 1: Verify Status Code pháº£i tráº£ vá» lÃ  201 Created
+    expect(response.status()).toBe(201);
+    console.log(`âœ… Äiá»ƒm kiá»ƒm tra 1: Status Code chÃ­nh xÃ¡c = ${response.status()}`);
+
+    // BÆ°á»›c 2: Giáº£i nÃ©n JSON vÃ  Verify xem Server cÃ³ lÆ°u Ä‘Ãºng dá»¯ liá»‡u mÃ¬nh gá»­i lÃªn khÃ´ng
+    const body = await response.json();
+
+    expect(body.title).toBe(payloadData.title); // Kiá»ƒm tra tiÃªu Ä‘á»
+    expect(body.body).toBe(payloadData.body);   // Kiá»ƒm tra ná»™i dung
+    expect(body.userId).toBe(payloadData.userId); // Kiá»ƒm tra mÃ£ User ID
+
+    // BÆ°á»›c 3: Verify trÆ°á»ng dá»¯ liá»‡u tá»± sinh tá»« Server
+    // Tháº±ng JSONPlaceholder máº·c Ä‘á»‹nh cá»© táº¡o má»›i thÃ nh cÃ´ng lÃ  nÃ³ nháº£ vá» id = 101
+    expect(body.id).toBe(101); 
+    
+    console.log(`âœ… Äiá»ƒm kiá»ƒm tra 2: Dá»¯ liá»‡u map khá»›p hoÃ n toÃ n. BÃ i viáº¿t má»›i cÃ³ ID tá»± sinh lÃ : ${body.id}`);
+  });
+
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\auth-api.setup.ts ====================
+
+import { test as setup, expect } from '@playwright/test';
+
+setup('ÄÄƒng nháº­p há»‡ thá»‘ng qua API', async ({ request }) => {
+  
+  // BÆ¯á»šC 1: Gá»i GET vÃ o trang login Ä‘á»ƒ Server phÃ¡t Cookie má»“i vÃ  sinh Form Key
+  console.log('--- [API Auth] BÆ°á»›c 1: Gá»i GET trang Login Ä‘á»ƒ nháº·t Form Key... ---');
+  const loginPageResponse = await request.get('/index.php/customer/account/login/');
+  const loginHtml = await loginPageResponse.text();
+
+  // DÃ¹ng Ä‘oáº¡n RegExp Ä‘á»ƒ tá»± Ä‘á»™ng bá»›i tÃ¬m chuá»—i 'form_key' náº±m trong HTML cá»§a trang login
+  const formKeyMatch = loginHtml.match(/name="form_key".*?value="([^"]+)"/) || loginHtml.match(/value="([^"]+)"\s+name="form_key"/);
+  const formKey = formKeyMatch ? formKeyMatch[1] : '';
+  
+  console.log(`ðŸ‘‰ ÄÃ£ bÃ³c tÃ¡ch thÃ nh cÃ´ng mÃ£ Form Key Ä‘á»™ng: ${formKey}`);
+
+  // BÆ¯á»šC 2: Gá»­i request POST Ä‘Äƒng nháº­p chÃ­nh thá»©c (CÃ³ kÃ¨m Form Key giá»‘ng há»‡t nhÆ° UI anh vá»«a check)
+  console.log('--- [API Auth] BÆ°á»›c 2: Gá»­i request POST Ä‘Äƒng nháº­p kÃ¨m chÃ¬a khÃ³a báº£o máº­t... ---');
+  const response = await request.post('/index.php/customer/account/loginPost/', {
+    form: {
+      'form_key': formKey, // ðŸ”¥ CHÃ Máº NG: ÄÃ£ cÃ³ chiáº¿c vÃ© thÃ´ng hÃ nh nÃ y!
+      'login[username]': 'anh_tester_pro@gmail.com',
+      'login[password]': '123456', 
+    },
+  });
+
+  const finalUrl = response.url();
+  console.log(`[API Auth] Trang Ä‘Ã­ch cuá»‘i cÃ¹ng Ä‘áº¡t Ä‘Æ°á»£c: ${finalUrl}`);
+
+  // KIá»‚M TRA: ÄÃ­ch Ä‘áº¿n cuá»‘i cÃ¹ng pháº£i chuáº©n khÃ­t vá»›i link thÃ nh cÃ´ng 100% nhÆ° anh check trÃªn UI
+  expect(finalUrl).toBe('http://live.techpanda.org/index.php/customer/account/');
+
+  // BÆ¯á»šC 3: LÆ°u láº¡i tráº¡ng thÃ¡i Ä‘Äƒng nháº­p há»£p lá»‡ vÃ o file JSON cho cÃ¡c test case sau dÃ¹ng chung
+  await request.storageState({ path: 'playwright/.auth/user.json' });
+  console.log(`âœ… [API Auth] ÄÄ‚NG NHáº¬P THÃ€NH CÃ”NG! ÄÃ£ Ä‘á»“ng bá»™ Session Cookie.`);
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\auth.setup.ts ====================
+
+import { test as setup, expect } from '@playwright/test';
+import fs from 'fs'; // 1. Import thÃªm thÆ° viá»‡n xá»­ lÃ½ file cá»§a Node.js
+
+// ÄÆ°á»ng dáº«n nÆ¡i sáº½ lÆ°u file "vÃ© thÃ´ng hÃ nh"
+const authFile = 'playwright/.auth/user.json';
+
+setup('authenticate', async ({ page }) => {
+  // --------------------------------------------------------
+  // BÆ¯á»šC 0: XÃ“A FILE CÅ¨ (Náº¾U CÃ“) Äá»‚ Äáº¢M Báº¢O Sáº CH Sáº¼ 100%
+  // --------------------------------------------------------
+  if (fs.existsSync(authFile)) {
+    fs.unlinkSync(authFile); // Lá»‡nh xÃ³a file
+    console.log('ðŸ§¹ ÄÃ£ xÃ³a file vÃ© thÃ´ng hÃ nh cÅ©!');
+  }
+  // 1. Äi tá»›i trang Login cá»§a Techpanda
+  await page.goto('http://live.techpanda.org/index.php/customer/account/login/');
+
+  // 2. Thá»±c hiá»‡n Ä‘Äƒng nháº­p (Anh cÃ³ thá»ƒ dÃ¹ng Page Object á»Ÿ Ä‘Ã¢y cho sáº¡ch)
+  await page.getByTitle('Email Address').fill('anh_tester_pro@gmail.com');
+  await page.getByTitle('Password').fill('123456');
+  await page.getByRole('button', { name: 'Login' }).click();
+
+  // 3. Kiá»ƒm tra xem Ä‘Ã£ Login thÃ nh cÃ´ng chÆ°a (pháº£i vÃ o tá»›i Dashboard)
+  await expect(page).toHaveURL(/.*customer\/account/);
+
+  await expect(page.locator('.welcome-msg').first()).toContainText('Anh Tester!', { ignoreCase: true });
+
+  // 4. Láº¤Y TOÃ€N Bá»˜ COOKIES & SESSION LÆ¯U VÃ€O FILE JSON
+  await page.context().storageState({ path: authFile });
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\a_register.spec.ts ====================
+
+import { expect } from '@playwright/test';
+import { RegisterPage } from '../pageObject/RegisterPage';
+import { HomePage } from '../pageObject/HomePage';
+import { delay } from "../ultility/utils";
+import { BasePage } from '../base/BasePage';
+import testData from '../data/user_register.json';
+import { test } from '../base/BaseTest'; // Äáº£m báº£o Ä‘Æ°á»ng dáº«n chÃ­nh xÃ¡c
+import fs from 'fs';
+import path from 'path';
+import { allure } from 'allure-playwright';
+
+// DÃ’NG BÃ™A CHÃš: Ã‰p Playwright KHÃ”NG dÃ¹ng "login session" cho riÃªng file nÃ y.
+// TrÃ¬nh duyá»‡t sáº½ má»Ÿ lÃªn á»Ÿ tráº¡ng thÃ¡i tráº¯ng bÃ³c (nhÆ° áº©n danh).
+test.use({ storageState: { cookies: [], origins: [] } });
+
+const generateRandomEmail = (): string => {
+  const randomString = Math.random().toString(36).substring(2, 10); // Random alphanumeric string
+  return `long_${randomString}@qa.team`;
+};
+
+/* Khai bÃ¡o trong fixtures Ä‘á»ƒ dÃ¹ng chung rá»“i thÃ¬ ko cáº§n khai bÃ¡o trong test case ná»¯a
+const env = process.env.ENV || 'dev';
+  const envConfig = JSON.parse(
+  fs.readFileSync(path.join(__dirname, `../environments/${env}.json`), 'utf8')
+  );*/
+//test.describe.configure({ mode: 'parallel' });
+
+test.beforeEach(async ({ page , registerPage, homePage,  env }) => {
+      await registerPage.navigateTo(env.baseURL);
+  });
+
+test('Open Page', async ({ page, env }) => {
+  //await page.goto(envConfig.baseURL);
+  // await page.goto(env.baseURL);
+  // Expect a title "to contain" a substring.
+  await expect(page).toHaveTitle(/Home page/);
+});
+
+// âŒ CASE 1 â€“ Táº¤T Cáº¢ FIELD Äá»‚ TRá»NG
+  test("Register fail: all fields empty", async ({ registerPage, homePage, env }) => {
+    await homePage.click_Menu_Account_Link();
+    await homePage.click_Register_Link();
+    await registerPage.clickRegisterButton();
+    //const error = await registerPage.getFieldError("firstname");
+    expect(await registerPage.getFieldError("firstname")).toBe(testData.register_error_message);
+    expect(await registerPage.getFieldError("lastname")).toBe(testData.register_error_message);
+    expect(await registerPage.getFieldError("email_address")).toBe(testData.register_error_message);
+    expect(await registerPage.getFieldError("password")).toBe(testData.register_error_message);
+    expect(await registerPage.getFieldError("confirmation")).toBe(testData.register_error_message);
+
+  });
+
+// âŒ CASE 2 â€“ EMAIL INVALID
+  test("Register fail: invalid email format", async ({ registerPage, homePage, page, browserName }) => {
+    // BÆ¯á»šC 1: Báº¥m Menu Account 
+    await test.step('1. Báº¥m vÃ o Menu Account', async () => {
+    await homePage.click_Menu_Account_Link(); 
+    })
+    // BÆ¯á»šC 2: Báº¥m vÃ o Register Link
+    await test.step('2. Báº¥m vÃ o Register Link', async () => {
+    await homePage.click_Register_Link();
+    })    
+    // BÆ¯á»šC 3: Nháº­p thÃ´ng tin há»£p lá»‡ vÃ o táº¥t cáº£ cÃ¡c field, riÃªng email nháº­p sai Ä‘á»‹nh dáº¡ng 
+    await test.step('3. Nháº­p thÃ´ng tin há»£p lá»‡ vÃ o táº¥t cáº£ cÃ¡c field, riÃªng email nháº­p sai Ä‘á»‹nh dáº¡ng', async () => {
+    await registerPage.enterFirstname(testData.firstname);
+    await registerPage.enterMiddlename(testData.middlename);
+    await registerPage.enterLastname(testData.lastname);
+    await registerPage.enterEmail(testData.invalid_email);
+    await registerPage.enterPassword(testData.password);
+    await registerPage.enterConfirmPassword(testData.confirm_password);
+    await registerPage.clickRegisterButton();
+    /*const validationMessage = await page.locator("#email_address")
+    .evaluate((el: any) => el.validationMessage);
+     expect(validationMessage).toBe(testData.email_toast_error_message);*/
+    const msg = await registerPage.getEmailValidationMessage();
+    expect(msg).toBe(testData.email_toast_error_message[browserName]);
+    })
+  // 2. Viáº¿t if/else Ä‘á»ƒ check riÃªng cho tá»«ng tháº±ng
+   /* if (browserName === 'firefox') {
+        expect(msg).toBe("Please enter an email address.");
+    } 
+    else if (browserName === 'chromium') {
+        // Chromium (Chrome/Edge) thÃ¬ dÃ¹ng láº¡i cÃ¡i data cÅ© cá»§a anh
+        expect(msg).toBe(testData.email_toast_error_message); 
+    } 
+    else if (browserName === 'webkit') {
+        // Chuáº©n bá»‹ sáºµn cho Safari (náº¿u team anh cÃ³ yÃªu cáº§u cháº¡y)
+        expect(msg).toBe("Enter a valid email address."); // LÆ°u Ã½: CÃ¢u nÃ y em vÃ­ dá»¥, anh check láº¡i trÃªn Safari thá»±c táº¿ nhÃ©
+    }*/
+  });
+
+// âŒ CASE 3 â€“ PASSWORD < 6 KÃ Tá»°
+   test("Register unsuccessfully when password is less than 6 characters", async ({ registerPage, homePage, page }) => {
+    await homePage.click_Menu_Account_Link();
+    await homePage.click_Register_Link();
+    await registerPage.enterFirstname(testData.firstname);
+    await registerPage.enterMiddlename(testData.middlename);
+    await registerPage.enterLastname(testData.lastname);
+    await registerPage.enterEmail(testData.valid_email);
+    await registerPage.enterPassword(testData.short_password);
+    await registerPage.enterConfirmPassword(testData.short_password);
+    await registerPage.clickRegisterButton();
+  const error = await registerPage.getMinLengthPasswordError();
+  expect(error).toBe(testData.password_min_length_error);
+});
+
+
+
+// âŒ CASE 4 â€“ PASSWORD & CONFIRM PASSWORD KHÃ”NG TRÃ™NG
+   test("Register unsuccessfully when password and confirm password do not match", async ({ registerPage, homePage, page }) => {
+    await homePage.click_Menu_Account_Link();
+
+    await homePage.click_Register_Link();
+
+    await registerPage.enterFirstname(testData.firstname);
+    await registerPage.enterMiddlename(testData.middlename);
+    await registerPage.enterLastname(testData.lastname);
+    await registerPage.enterEmail(testData.valid_email);
+    await registerPage.enterPassword(testData.short_password);
+    await registerPage.enterConfirmPassword(testData.non_password);
+    await registerPage.clickRegisterButton();
+  const error = await registerPage.getPasswordMismatchError();
+  expect(error).toBe(testData.password_not_match_error);
+});
+
+
+// âŒ CASE 5 â€“ REGISTER SUCCESSFULLY
+test('Register successfully with valid credentials', async ({ page, registerPage, homePage, testUser, env }) => {
+  //await page.goto('/');
+  //const bagePage = new BasePage(page)
+  //khai bÃ¡o á»Ÿ fixtures.ts thÃ¬ ko cáº§n khá»Ÿi táº¡o á»Ÿ Ä‘Ã¢y ná»¯a
+ // const registerPage = new RegisterPage(page);
+  const randomEmail = generateRandomEmail();
+  const password = testData.password;
+  const confirm_password = testData.confirm_password;
+  //await bagePage.navigateTo('/');
+  await allure.step('Äi tá»›i trang register', async () => {
+  //await registerPage.goTo(envConfig.baseURL);
+  await registerPage.navigateTo(env.baseURL);
+  //await registerPage.navigateToRegisterPage();
+  });
+  //await page.getByRole('link', { name: 'Account', exact: true }). click();
+  //await page.getByRole('link', { name: 'Register' }). click();
+  await allure.step('Báº¥m vÃ o Menu Account', async () => {
+  await homePage.click_Menu_Account_Link();
+  });
+
+  await allure.step('Báº¥m vÃ o nÃºt Register', async () => {
+  await homePage.click_Register_Link();
+  });
+
+  await allure.step('Nháº­p cÃ¡c thÃ´ng tin há»£p lÃª vÃ o form Ä‘Äƒng kÃ­', async () => {
+  await registerPage.register(testData.firstname, testData.middlename, testData.lastname,randomEmail, password, confirm_password);
+  //await registerPage.register(testData.firstname, testData.middlename, testData.lastname,testUser.email, testUser.password,testUser.password);
+  });
+
+  fs.writeFileSync('tests/data/user_login.json', JSON.stringify({ randomEmail, password }, null, 2));
+
+  // Expects page to have a heading with the name of Installation.
+  await allure.step('XÃ¡c minh há»‡ thá»‘ng chuyá»ƒn hÆ°á»›ng vÃ o trang My DashBoard', async () => {
+  await expect(page.getByRole('heading', { name: 'My Dashboard' })).toBeVisible();
+  await expect(page.getByText('Thank you for registering')).toHaveText('Thank you for registering with Main Website Store.');
+      });
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\b_login.spec.ts ====================
+
+import { expect } from '@playwright/test';
+import { test } from '../base/BaseTest'; // Äáº£m báº£o Ä‘Æ°á»ng dáº«n chÃ­nh xÃ¡c
+import fs from 'fs';
+import path from 'path';
+import { delay } from "../ultility/utils";
+import { allure } from 'allure-playwright';
+import loginData from "../data/user_login_invalid.json";
+// DÃ’NG BÃ™A CHÃš: Ã‰p Playwright KHÃ”NG dÃ¹ng "login session" cho riÃªng file nÃ y.
+// TrÃ¬nh duyá»‡t sáº½ má»Ÿ lÃªn á»Ÿ tráº¡ng thÃ¡i tráº¯ng bÃ³c (nhÆ° áº©n danh).
+test.use({ storageState: { cookies: [], origins: [] } });
+
+test.describe('Login feature', () => {
+  let email: string;
+  let password: string;
+
+  test.beforeAll(() => {
+    const userFile = 'tests/data/user_login.json';
+    if (!fs.existsSync(userFile)) {
+      throw new Error('âŒ Missing user.json â€“ run register test first!');
+    }
+
+    const data = JSON.parse(fs.readFileSync(userFile, 'utf-8'));
+    email = data.randomEmail;
+    password = data.password;
+  });
+
+  /* Khai bÃ¡o trong fixtures Ä‘á»ƒ dÃ¹ng chung rá»“i thÃ¬ ko cáº§n khai bÃ¡o trong test case ná»¯a
+const env = process.env.ENV || 'dev';
+  const envConfig = JSON.parse(
+  fs.readFileSync(path.join(__dirname, `../environments/${env}.json`), 'utf8')
+  );*/
+  test.beforeEach(async ({ page ,loginPage,  env }) => {
+      await loginPage.navigateTo(env.baseURL);
+  });
+
+   test("CASE 1 â€“ Táº¤T Cáº¢ FIELD TRá»NG", async ({ homePage, loginPage }) => {
+     await homePage.click_Menu_Account_Link();
+
+     await homePage.click_Login_Link();
+
+     await loginPage.clickLoginButton();
+
+
+     const emailError = await loginPage.getFieldError("email");
+     const passwordError = await loginPage.getFieldError("pass");
+
+     expect(emailError).toBe(loginData.required_error);
+     expect(passwordError).toBe(loginData.required_error);
+ 
+  });
+
+   test("CASE 2 â€“ EMAIL SAI FORMAT_1", async ({ homePage, loginPage, browserName }) => {
+    await homePage.click_Menu_Account_Link();
+
+    await homePage.click_Login_Link();
+
+    await loginPage.enterEmail(loginData.invalid_email_case1);
+
+    await loginPage.enterPassword(loginData.valid_password);
+
+    await loginPage.clickLoginButton();
+
+    const error = await loginPage.getEmailToastError();
+    console.log("GiÃ¡ trá»‹ thá»±c táº¿ láº¥y Ä‘Æ°á»£c:", error);
+    console.log("GiÃ¡ trá»‹ mong Ä‘á»£i trong data:", loginData.email_toast_error_case1);
+    expect(error).toBe(loginData.email_toast_error_case1[browserName]);
+    await delay();
+  });
+
+
+  test("CASE 3 â€“ EMAIL SAI FORMAT_2", async ({ homePage, loginPage, browserName}) => {
+    await homePage.click_Menu_Account_Link();
+
+    await homePage.click_Login_Link();
+
+    await loginPage.enterEmail(loginData.invalid_email_case2);
+
+    await loginPage.enterPassword(loginData.valid_password);
+
+    await loginPage.clickLoginButton();
+
+    const error = await loginPage.getEmailToastError();
+    console.log("GiÃ¡ trá»‹ thá»±c táº¿ láº¥y Ä‘Æ°á»£c:", error);
+    console.log("GiÃ¡ trá»‹ mong Ä‘á»£i trong data:", loginData.email_toast_error_case2);
+    expect(error).toBe(loginData.email_toast_error_case2[browserName]);
+    await delay();
+  });
+
+  test("CASE 4 â€“ EMAIL SAI FORMAT_3", async ({ homePage, loginPage }) => {
+    await homePage.click_Menu_Account_Link();
+
+    await homePage.click_Login_Link();
+
+    await loginPage.enterEmail(loginData.invalid_email_case3);
+
+    await loginPage.enterPassword(loginData.valid_password);
+
+    await loginPage.clickLoginButton();
+
+    const error = await loginPage.getEmailFormatError();
+    console.log("GiÃ¡ trá»‹ thá»±c táº¿ láº¥y Ä‘Æ°á»£c:", error);
+    console.log("GiÃ¡ trá»‹ mong Ä‘á»£i trong data:", loginData.email_format_error_case3);
+    expect(error).toBe(loginData.email_format_error_case3);
+    await delay();
+  });
+
+
+   test("CASE 5 â€“ EMAIL KHÃ”NG Tá»’N Táº I", async ({ homePage, loginPage }) => {
+    await homePage.click_Menu_Account_Link();
+
+    await homePage.click_Login_Link();
+
+    await loginPage.login(loginData.wrong_email, loginData.wrong_password);
+
+    const message = await loginPage.getLoginFailedMessage();
+    expect(message).toBe(loginData.login_failed_message);
+
+  });
+
+
+
+
+   test('CASE 6 â€“ LOGIN THÃ€NH CÃ”NG Vá»šI TÃ€I KHOáº¢N Há»¢P Lá»†', async ({page, loginPage, homePage, registerPage, testUser, env }) => {
+    await allure.step('Äi tá»›i trang login', async () => {
+    //await loginPage.navigateLoginPage();
+    //await loginPage.navigateTo(envConfig.baseURL);
+    await loginPage.navigateTo(env.baseURL);
+    });
+
+    await loginPage.step('Báº¥m vÃ o Menu Account', async () => {
+    await homePage.click_Menu_Account_Link();
+    });
+
+    await loginPage.step('Báº¥m vÃ o nÃºt Login', async () => {
+    await homePage.click_Login_Link();
+    });
+
+    await loginPage.step('Nháº­p vÃ o email vÃ  password', async () => {
+    // await loginPage.login("long1@qa.team","123456");
+    await loginPage.login(email, password);
+    });
+
+    await allure.step('XÃ¡c minh há»‡ thá»‘ng chuyá»ƒn hÆ°á»›ng vÃ o trang DashBoard', async () => {
+    // Giáº£ sá»­ sau login chuyá»ƒn hÆ°á»›ng vá» trang dashboard
+    await loginPage.verifyLoginSuccess(); 
+    });
+
+   });
+
+  /*test('Login failed with invalid credentials', async ({ loginPage, homePage }) => {
+   await loginPage.navigateLoginPage();
+    await homePage.click_Menu_Account_Link();
+    await homePage.click_Login_Link();
+    await loginPage.login("long111@qa.team","123456");
+    //const errorMsg = await loginPage.page.locator('.error').textContent();
+    //expect(errorMsg).toContain('Invalid credentials');
+  });*/
+
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\c checkout-valid.spec.ts ====================
+
+import { expect } from '@playwright/test';
+import { test } from '../base/BaseTest'; // Äáº£m báº£o Ä‘Æ°á»ng dáº«n chÃ­nh xÃ¡c
+import fs from 'fs';
+import path from 'path';
+import { delay } from "../ultility/utils";
+import { checkoutData } from "../data/checkout.data";
+
+test("@known-bug Guest Checkout flow â€“ success", async ({
+  homePage,
+  productPage,
+  cartPage,
+  checkoutPage,
+}) => {
+
+  await test.step("Open Mobile Category", async () => {
+    await delay();
+    await homePage.openCategoryMobile();
+  });
+
+  await test.step("Open first product", async () => {
+    await delay();
+    await homePage.openFirstProduct();
+  });
+
+  await test.step("Add product to cart", async () => {
+    await delay();
+    await productPage.addToCart();
+    await delay();
+  //  await productPage.openCart();
+  })
+
+  await test.step("Proceed to checkout", async () => {
+    await delay();
+    await cartPage.proceedToCheckout();
+     // ðŸ‘‡ BYPASS NGAY ÄÃ‚Y
+  await checkoutPage.bypassInsecureFormIfPresent();
+  });
+
+  await test.step("Checkout as guest", async () => {
+    await delay();
+    await checkoutPage.checkoutAsGuest();
+  });
+
+  await test.step("Fill billing information", async () => {
+    await delay();
+    await checkoutPage.fillBillingInformation(checkoutData);
+  });
+
+  await test.step("Select shipping method", async () => {
+    await delay();
+    await checkoutPage.selectShippingMethod();
+  });
+
+  await test.step("Select payment & place order", async () => {
+    await delay();
+    await checkoutPage.selectPaymentMethod();
+    await delay();
+    await checkoutPage.placeOrder();
+  });
+
+  await test.step("Verify order success", async () => {
+    const msg = await checkoutPage.getSuccessMessage();
+    expect(msg).toContain("Thank you for your purchase");
+  });
+
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\cart_coupon.spec.ts ====================
+
+import { test, } from '../base/BaseTest';
+
+import { expect } from '@playwright/test';
+
+test.describe('Cart & Coupon Code Feature', () => {
+   
+    test.beforeEach(async ({ mobilePage }) => {
+        await mobilePage.goToMobilePage();
+    });
+
+    test('TC_05: Verify Discount Coupon works correctly', async ({ mobilePage, cartPage }) => {
+        
+     
+        // Step 2: Click on 'Mobile' menu and add Sony Xperia to cart
+        await mobilePage.clickAddToCartSonyXperia();
+
+        // Kiá»ƒm tra text thÃ´ng bÃ¡o thÃªm vÃ o giá» hÃ ng thÃ nh cÃ´ng
+        const successMsg = await cartPage.getSuccessMessage();
+        expect(successMsg).toContain('Sony Xperia was added to your shopping cart.');
+
+        // Step 3: Enter Coupon code
+        await cartPage.enterCouponCode('GURU50');
+        await cartPage.clickApplyCoupon();
+
+        // Step 4: Verify the discount generated
+        const discountAmount = await cartPage.getDiscountAmountMessage();
+        const grandTotal = await cartPage.getGrandTotal();
+
+        // Khá»›p chÃ­nh xÃ¡c data mong Ä‘á»£i tá»« file Excel cá»§a anh
+        expect(discountAmount).toBe('-$5.00');
+        expect(grandTotal).toBe('$95.00');
+    });
+
+    test('TC_06: Verify Error Message for Invalid Coupon Code', async ({ mobilePage, cartPage }) => {
+        // Step 2: Click on 'Mobile' menu and add Sony Xperia to cart
+        await mobilePage.clickAddToCartSonyXperia();
+
+        // Step 3: Enter invalid Coupon code
+        await cartPage.enterCouponCode('INVALID');
+        await cartPage.clickApplyCoupon();
+
+        // Step 4: Verify the error message
+        const errorMsg = await cartPage.getErrorMessage();
+        expect(errorMsg).toContain('The coupon code "INVALID" is not valid.');
+    });
+
+    test('TC_07: Verify Error Message for Invalid Quantity', async ({ mobilePage, cartPage }) => {
+        // Step 2: Click on 'Mobile' menu and add Sony Xperia to cart
+        await mobilePage.clickAddToCartSonyXperia();    
+        // Step 3: Enter invalid quantity (e.g., 501) and click Update
+        await cartPage.enterQuantity('501');
+        await cartPage.clickUpdate();
+        // Step 4: Verify the error message
+        const errorQtyMsg = await cartPage.getQuantityErrorMessage();
+        expect(errorQtyMsg).toContain('The maximum quantity allowed for purchase is 500.');
+
+        const errorMsg = await cartPage.getErrorMessage();
+        expect(errorMsg).toContain('Some of the products cannot be ordered in requested quantity.');
+        
+        // Step 5: Click on "Empty Cart" button
+        await cartPage.clickEmptyCart();
+        // Step 6: Verify the cart is empty
+        const emptyCartMsg = await cartPage.getEmptyCartMessage();
+        expect(emptyCartMsg).toContain('You have no items in your shopping cart.');
+      
+        
+    });
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\mobile_list.spec.ts ====================
+
+import { test } from '../base/BaseTest'; // Äáº£m báº£o Ä‘Æ°á»ng dáº«n chÃ­nh xÃ¡c
+
+import { expect } from '@playwright/test';
+
+// Cho cÃ¡c test case cháº¡y Ä‘á»™c láº­p khÃ´ng cáº§n "vÃ© thÃ´ng hÃ nh" user.json
+//test.use({ storageState: { cookies: [], origins: [] } });
+
+test.describe('Mobile Product List Feature', () => {
+
+    test.beforeEach(async ({ mobilePage }) => {
+        await mobilePage.goToMobilePage();
+    });
+
+    test('TC_01 Verify products are sorted by Name (A-Z)', async ({ mobilePage }) => {
+        // 1. Thao tÃ¡c UI: Chá»n Sort by Name
+        await mobilePage.selectSortBy('Name');
+
+        // 2. Láº¥y danh sÃ¡ch tÃªn sáº£n pháº©m thá»±c táº¿ hiá»ƒn thá»‹ trÃªn UI
+        const actualNames = await mobilePage.getProductNames();
+
+        // 3. Táº¡o má»™t máº£ng ká»³ vá»ng: Copy máº£ng thá»±c táº¿ vÃ  dÃ¹ng hÃ m cá»§a JS Ä‘á»ƒ tá»± sáº¯p xáº¿p A-Z
+        const expectedNames = [...actualNames].sort();
+
+        // 4. So sÃ¡nh: Máº£ng UI cÃ³ giá»‘ng y há»‡t máº£ng Ä‘Ã£ Ä‘Æ°á»£c sáº¯p xáº¿p chuáº©n khÃ´ng?
+        expect(actualNames).toEqual(expectedNames);
+    });
+
+    test('TC_02 Verify products are sorted by Price (Low to High)', async ({ mobilePage }) => {
+        // 1. Thao tÃ¡c UI: Chá»n Sort by Price
+        await mobilePage.selectSortBy('Price');
+
+        // 2. Láº¥y danh sÃ¡ch giÃ¡ thá»±c táº¿ trÃªn UI (Ä‘Ã£ convert ra dáº¡ng sá»‘)
+        const actualPrices = await mobilePage.getProductPrices();
+
+        // 3. Táº¡o máº£ng ká»³ vá»ng: Copy máº£ng thá»±c táº¿ vÃ  sáº¯p xáº¿p bÃ© -> lá»›n
+        const expectedPrices = [...actualPrices].sort((a, b) => a - b);
+
+        // 4. So sÃ¡nh
+        expect(actualPrices).toEqual(expectedPrices);
+    });
+
+    test('TC_03: Verify View As List layout', async ({ page, mobilePage }) => {
+        // 1. Click icon List
+        await mobilePage.clickListView();
+
+        // 2. Kiá»ƒm tra URL (Chá»‰ mang tÃ­nh cháº¥t thá»§ tá»¥c)
+        expect(page.url()).toContain('mode=list');
+
+        // 3. KIá»‚M TRA UI SIÃŠU CHáº¶T CHáº¼ (Thá»±c táº¿ Ä‘áº­p vÃ o máº¯t ngÆ°á»i dÃ¹ng)
+        // a. Cáº¥u trÃºc list hiá»ƒn thá»‹
+        expect(await mobilePage.isListViewDisplayed()).toBeTruthy(); 
+        
+        // b. NÃºt List trÃªn thanh cÃ´ng cá»¥ pháº£i chuyá»ƒn sang tráº¡ng thÃ¡i Active
+        expect(await mobilePage.isListViewIconActive()).toBeTruthy();
+
+        // c. Äoáº¡n chá»¯ mÃ´ táº£ sáº£n pháº©m (chá»‰ cÃ³ á»Ÿ List view) Báº®T BUá»˜C pháº£i hiá»ƒn thá»‹
+        expect(await mobilePage.isProductDescriptionVisible()).toBeTruthy();
+    });
+
+    test('TC_04: Verify that cost of product in list page and details page are equal', async ({ mobilePage }) => {
+    
+    // Step 1: Click on Mobile menu (Ä‘á»ƒ cháº¯c cháº¯n Ä‘ang á»Ÿ trang List)
+    await test.step('Step 1: Click on Mobile menu', async () => {   
+    await mobilePage.clickMobileMenu();
+    await mobilePage.clickTVMenu(); // Click sang trang TV rá»“i click láº¡i Ä‘á»ƒ cháº¯c cháº¯n load láº¡i trang List, trÃ¡nh trÆ°á»ng há»£p Ä‘ang á»Ÿ trang List rá»“i mÃ  giÃ¡ váº«n hiá»ƒn thá»‹ (do lá»—i cache) nÃªn dÃ¹ cÃ³ click hay khÃ´ng thÃ¬ giÃ¡ váº«n Ä‘Æ°á»£c láº¥y vá», dáº«n Ä‘áº¿n viá»‡c test case bá»‹ false positive (váº«n pass dÃ¹ code bá»‹ lá»—i)
+    await mobilePage.clickMobileMenu();
+    });
+
+    // Step 2: In the list of all mobiles, get cost of Sony Xperia mobile
+    const priceInList = await mobilePage.getSonyXperiaPriceInList();
+    console.log(`GiÃ¡ á»Ÿ trang List: ${priceInList}`);
+            // Truyá»n luÃ´n vÃ o step Ä‘á»ƒ nÃ³ in ra cáº£ Terminal láº«n HTML Report
+    await test.step(`Step 2: Láº¥y Ä‘Æ°á»£c giÃ¡ cá»§a Sony Xperia trÃªn List Page lÃ : ${priceInList}`, async () => {
+    });
+    
+    // Step 3: Click on Sony Xperia detail
+    await test.step('Step 3: Click on Sony Xperia detail', async () => {
+    await mobilePage.clickSonyXperiaDetail();
+    });
+
+    // Step 4: Get cost Sony Xperia mobile from detail page
+    const priceInDetail = await mobilePage.getSonyXperiaPriceInDetail();
+    await test.step('Step 4: Get cost Sony Xperia mobile from detail page', async () => {
+    console.log(`GiÃ¡ á»Ÿ trang Detail: ${priceInDetail}`);
+    });
+    // Step 5: Compare value in Step 2 and 4
+    // Playwright sáº½ so sÃ¡nh chuá»—i, vÃ­ dá»¥: "$100.00" === "$100.00"
+    await test.step(`Step 5: Compare value in Step 2 :${priceInList} and 4 :${priceInDetail}`, async () => {
+    expect(priceInList).toEqual(priceInDetail);
+    });
+});
+})
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\mobile_list_getByRole.spec.ts ====================
+
+import { test } from '../base/BaseTest'; // Äáº£m báº£o Ä‘Æ°á»ng dáº«n chÃ­nh xÃ¡c
+
+import { expect } from '@playwright/test';
+
+// Cho cÃ¡c test case cháº¡y Ä‘á»™c láº­p khÃ´ng cáº§n "vÃ© thÃ´ng hÃ nh" user.json
+//test.use({ storageState: { cookies: [], origins: [] } });
+
+test.describe('Mobile Product List Feature', () => {
+
+    test.beforeEach(async ({ mobilePage_getByRole }) => {
+        await mobilePage_getByRole.goToMobilePage();
+    });
+
+    test('TC_01 Verify products are sorted by Name (A-Z)', async ({ mobilePage_getByRole }) => {
+        // 1. Thao tÃ¡c UI: Chá»n Sort by Name
+        await mobilePage_getByRole.selectSortBy('Name');
+
+        // 2. Láº¥y danh sÃ¡ch tÃªn sáº£n pháº©m thá»±c táº¿ hiá»ƒn thá»‹ trÃªn UI
+        const actualNames = await mobilePage_getByRole.getProductNames();
+
+        // 3. Táº¡o má»™t máº£ng ká»³ vá»ng: Copy máº£ng thá»±c táº¿ vÃ  dÃ¹ng hÃ m cá»§a JS Ä‘á»ƒ tá»± sáº¯p xáº¿p A-Z
+        const expectedNames = [...actualNames].sort();
+
+        // 4. So sÃ¡nh: Máº£ng UI cÃ³ giá»‘ng y há»‡t máº£ng Ä‘Ã£ Ä‘Æ°á»£c sáº¯p xáº¿p chuáº©n khÃ´ng?
+        expect(actualNames).toEqual(expectedNames);
+    });
+
+    test('TC_02 Verify products are sorted by Price (Low to High)', async ({ mobilePage_getByRole }) => {
+        // 1. Thao tÃ¡c UI: Chá»n Sort by Price
+        await mobilePage_getByRole.selectSortBy('Price');
+
+        // 2. Láº¥y danh sÃ¡ch giÃ¡ thá»±c táº¿ trÃªn UI (Ä‘Ã£ convert ra dáº¡ng sá»‘)
+        const actualPrices = await mobilePage_getByRole.getProductPrices();
+
+        // 3. Táº¡o máº£ng ká»³ vá»ng: Copy máº£ng thá»±c táº¿ vÃ  sáº¯p xáº¿p bÃ© -> lá»›n
+        const expectedPrices = [...actualPrices].sort((a, b) => a - b);
+
+        // 4. So sÃ¡nh
+        expect(actualPrices).toEqual(expectedPrices);
+    });
+
+    test('TC_03: Verify View As List layout', async ({ page, mobilePage_getByRole }) => {
+        // 1. Click icon List
+        await mobilePage_getByRole.clickListView();
+
+        // 2. Kiá»ƒm tra URL (Chá»‰ mang tÃ­nh cháº¥t thá»§ tá»¥c)
+        expect(page.url()).toContain('mode=list');
+
+        // 3. KIá»‚M TRA UI SIÃŠU CHáº¶T CHáº¼ (Thá»±c táº¿ Ä‘áº­p vÃ o máº¯t ngÆ°á»i dÃ¹ng)
+        // a. Cáº¥u trÃºc list hiá»ƒn thá»‹
+        expect(await mobilePage_getByRole.isListViewDisplayed()).toBeTruthy(); 
+        
+        // b. NÃºt List trÃªn thanh cÃ´ng cá»¥ pháº£i chuyá»ƒn sang tráº¡ng thÃ¡i Active
+        expect(await mobilePage_getByRole.isListViewIconActive()).toBeTruthy();
+
+        // c. Äoáº¡n chá»¯ mÃ´ táº£ sáº£n pháº©m (chá»‰ cÃ³ á»Ÿ List view) Báº®T BUá»˜C pháº£i hiá»ƒn thá»‹
+        expect(await mobilePage_getByRole.isProductDescriptionVisible()).toBeTruthy();
+    });
+
+    test('TC_04: Verify that cost of product in list page and details page are equal', async ({ mobilePage_getByRole }) => {
+    
+    // Step 1: Click on Mobile menu (Ä‘á»ƒ cháº¯c cháº¯n Ä‘ang á»Ÿ trang List)
+    await test.step('Step 1: Click on Mobile menu', async () => {   
+    await mobilePage_getByRole.clickMobileMenu();
+    await mobilePage_getByRole.clickTVMenu(); // Click sang trang TV rá»“i click láº¡i Ä‘á»ƒ cháº¯c cháº¯n load láº¡i trang List, trÃ¡nh trÆ°á»ng há»£p Ä‘ang á»Ÿ trang List rá»“i mÃ  giÃ¡ váº«n hiá»ƒn thá»‹ (do lá»—i cache) nÃªn dÃ¹ cÃ³ click hay khÃ´ng thÃ¬ giÃ¡ váº«n Ä‘Æ°á»£c láº¥y vá», dáº«n Ä‘áº¿n viá»‡c test case bá»‹ false positive (váº«n pass dÃ¹ code bá»‹ lá»—i)
+    await mobilePage_getByRole.clickMobileMenu();
+    });
+
+    // Step 2: In the list of all mobiles, get cost of Sony Xperia mobile
+    const priceInList = await mobilePage_getByRole.getSonyXperiaPriceInList();
+    console.log(`GiÃ¡ á»Ÿ trang List: ${priceInList}`);
+            // Truyá»n luÃ´n vÃ o step Ä‘á»ƒ nÃ³ in ra cáº£ Terminal láº«n HTML Report
+    await test.step(`Step 2: Láº¥y Ä‘Æ°á»£c giÃ¡ cá»§a Sony Xperia trÃªn List Page lÃ : ${priceInList}`, async () => {
+    });
+    
+    // Step 3: Click on Sony Xperia detail
+    await test.step('Step 3: Click on Sony Xperia detail', async () => {
+    await mobilePage_getByRole.clickSonyXperiaDetail();
+    });
+
+    // Step 4: Get cost Sony Xperia mobile from detail page
+    const priceInDetail = await mobilePage_getByRole.getSonyXperiaPriceInDetail();
+    await test.step('Step 4: Get cost Sony Xperia mobile from detail page', async () => {
+    console.log(`GiÃ¡ á»Ÿ trang Detail: ${priceInDetail}`);
+    });
+    // Step 5: Compare value in Step 2 and 4
+    // Playwright sáº½ so sÃ¡nh chuá»—i, vÃ­ dá»¥: "$100.00" === "$100.00"
+    await test.step(`Step 5: Compare value in Step 2 :${priceInList} and 4 :${priceInDetail}`, async () => {
+    expect(priceInList).toEqual(priceInDetail);
+    });
+});
+})
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\e2e\test_login_session.spec.ts ====================
+
+import { test, expect } from '@playwright/test';
+
+test('Check My Product in Cart', async ({ page }) => {
+  // Vá»«a má»Ÿ trang Dashboard lÃ  nÃ³ ÄÃƒ ÄÄ‚NG NHáº¬P Sáº´N Rá»’I
+  await page.goto('http://live.techpanda.org/index.php/customer/account/');
+
+  // Kiá»ƒm tra tÃªn ngÆ°á»i dÃ¹ng hiá»ƒn thá»‹ (chá»©ng minh Ä‘Ã£ login thÃ nh cÃ´ng)
+  const welcomeMsg = page.locator('.welcome-msg').first();
+  await expect(welcomeMsg).toContainText('Anh Tester!', { ignoreCase: true });  
+  // Tiáº¿p tá»¥c test cÃ¡c tÃ­nh nÄƒng Giá» hÃ ng, Thanh toÃ¡n...
+  await page.getByRole('link', { name: 'CART' }).click();
+  await expect(page.locator('#header-cart p.empty')).toHaveText('You have no items in your shopping cart.');
+});
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\environments\dev.json ====================
+
+{
+  "baseURL": "http://live.techpanda.org/index.php",
+  "default_email": "admin@gmail.com",
+  "default_password": "123456"
+}
+
+    
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\environments\prod.json ====================
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\environments\staging.json ====================
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageObject\CartPage.ts ====================
+
+import { Page } from '@playwright/test';
+import { BasePage } from '../base/BasePage';
+import { CartPageUI } from '../pageUI/CartPageUI';
+
+export class CartPage extends BasePage {
+    constructor(page: Page) {
+        super(page);
+    }
+
+    async getSuccessMessage(): Promise<string | null> {
+        return await this.page.locator(CartPageUI.SUCCESS_MESSAGE).innerText();
+    }
+
+    async enterCouponCode(couponCode: string) {
+        await this.page.locator(CartPageUI.COUPON_INPUT).fill(couponCode);
+    }
+
+    async clickApplyCoupon() {
+        await this.page.locator(CartPageUI.APPLY_COUPON_BUTTON).click();
+    }
+
+    async getDiscountAmountMessage(): Promise<string | null> {
+        return await this.page.locator(CartPageUI.DISCOUNT_TEXT).innerText();
+    }
+
+    async getGrandTotal(): Promise<string | null> {
+        return await this.page.locator(CartPageUI.GRAND_TOTAL_TEXT).innerText();
+    }
+
+    async enterQuantity(quantity: string) {
+          const qtyInput = this.page.locator(CartPageUI.QTY_INPUT);
+          // Step 1: Chá»§ Ä‘á»™ng CLICK vÃ o Ã´ Qty trÆ°á»›c Ä‘á»ƒ kÃ­ch hoáº¡t sá»± kiá»‡n HIá»†N nÃºt Update
+          await qtyInput.click();
+          // Step 2: XÃ³a sáº¡ch sá»‘ lÆ°á»£ng cÅ©
+          await qtyInput.clear();
+          // Step 3: GÃµ sá»‘ lÆ°á»£ng má»›i vÃ o 
+          // (DÃ¹ng pressSequentially thay cho fill Ä‘á»ƒ giáº£ láº­p gÃµ tá»«ng phÃ­m nhÆ° ngÆ°á»i tháº­t, kÃ­ch hoáº¡t má»i sá»± kiá»‡n cá»§a Ã´ input)
+          await qtyInput.pressSequentially(quantity);
+    }
+
+    async clickUpdate() {
+        await this.page.locator(CartPageUI.UPDATE_BUTTON).click();
+    }
+
+    async getErrorMessage(): Promise<string | null> {
+        return await this.page.locator(CartPageUI.ERROR_MESSAGE).innerText();
+    }
+
+    async getQuantityErrorMessage(): Promise<string | null> {
+        return await this.page.locator(CartPageUI.ERROR_QRTY_MESSAGE).innerText();
+    }
+  
+    async clickEmptyCart() {
+        await this.page.locator(CartPageUI.EMPTY_CART_LINK).click();
+    }
+
+    async getEmptyCartMessage(): Promise<string | null> {
+        return await this.page.locator(CartPageUI.EMPTY_CART_TEXT).innerText();
+    }
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageObject\CheckoutPage.ts ====================
+
+import { BasePage } from "../base/BasePage";
+import { CheckoutPageUI } from "../pageUI/CheckoutPageUI";
+
+export class CheckoutPage extends BasePage {
+  async checkoutAsGuest() {
+   // await this.clickElement(CheckoutPageUI.GUEST_RADIO);
+    await this.clickElement(CheckoutPageUI.CONTINUE);
+  }
+
+  async fillBillingInformation(data: any) {
+    await this.fillInput(CheckoutPageUI.FIRST_NAME, data.firstName);
+    await this.fillInput(CheckoutPageUI.LAST_NAME, data.lastName);
+    await this.fillInput(CheckoutPageUI.EMAIL, data.email);
+    await this.fillInput(CheckoutPageUI.ADDRESS, data.address);
+    await this.fillInput(CheckoutPageUI.CITY, data.city);
+    await this.fillInput(CheckoutPageUI.ZIP, data.zip);
+    await this.fillInput(CheckoutPageUI.TELEPHONE, data.telephone);
+    await this.clickElement(CheckoutPageUI.BILLING_CONTINUE);
+     // ðŸ‘‰ State / Province (Báº®T BUá»˜C)
+    await this.select(
+      CheckoutPageUI.STATE_PROVINCE,
+      data.state
+    );
+    await this.select(
+      CheckoutPageUI.STATE_PROVINCE,
+      data.state
+    );
+  }
+
+  async selectShippingMethod() {
+    await this.clickElement(CheckoutPageUI.SHIPPING_RADIO);
+    await this.clickElement(CheckoutPageUI.SHIPPING_CONTINUE);
+  }
+
+  async selectPaymentMethod() {
+    await this.clickElement(CheckoutPageUI.PAYMENT_CHECK);
+    await this.clickElement(CheckoutPageUI.PAYMENT_CONTINUE);
+  }
+
+  async placeOrder() {
+    await this.clickElement(CheckoutPageUI.PLACE_ORDER_BUTTON);
+  }
+
+  async getSuccessMessage() {
+    return await this.getElementText(CheckoutPageUI.SUCCESS_MESSAGE);
+  }
+}
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageObject\HomePage.ts ====================
+
+import { Page, Locator } from '@playwright/test';
+import { BasePage } from '../base/BasePage';
+import { HomePageUI } from "../pageUI/HomePageUI";
+
+export class HomePage extends BasePage {
+  private menuAccountLink = 'a[data-target-element="#header-account"]';
+  private registerLink = 'a[title="Register"]';
+  private loginLink = 'a[title="Log In"]';
+  private logoutLink = 'a[title="Log Out"]';
+
+  async click_Menu_Account_Link() {
+    await this.waitForElementVisible(this.menuAccountLink);
+    await this.clickElement(this.menuAccountLink, { force: true });
+  }
+
+  async click_Register_Link() {
+    await this.waitForElementVisible(this.registerLink);
+    await this.clickElement(this.registerLink, { force: true });
+  }
+
+  async click_Login_Link() {
+    await this.waitForElementVisible(this.loginLink);
+    await this.clickElement(this.loginLink, { force: true });
+  }
+
+  async click_Logout_Link() {
+    await this.waitForElementVisible(this.logoutLink);
+    await this.clickElement(this.logoutLink, { force: true });
+  }
+
+  async openCategoryMobile() {
+    await this.navigateTo("https://live.techpanda.org/index.php/mobile.html");
+  }
+
+  async openFirstProduct() {
+    await this.clickElement(HomePageUI.FIRST_PRODUCT_LINK);
+  }
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageObject\LoginPage.ts ====================
+
+import { Page, Locator } from '@playwright/test';
+import { BasePage } from '../base/BasePage';
+import { LoginPageUI } from '../pageUI/LoginPageUI';
+import { step } from '../ultility/step-decorator';
+import { AllureHelper } from "../helpers/AllureHelper";
+import { allure } from 'allure-playwright';
+
+export class LoginPage extends BasePage {
+  //private emailField = 'input[id="email"]';
+  // private passwordField = 'input#pass';
+
+  /* async navigateLoginPage() {
+     await this.page.goto('/');
+   }*/
+
+
+  async enterEmail(email: string) {
+    await AllureHelper.step(`Nháº­p email: ${email}`, async () => {
+      // await allure.step(`Nháº­p email: ${email}`, async () => {
+      // await this.step(`Nháº­p email: ${email}`, async () => {
+
+      await this.fillInput(LoginPageUI.emailField, email);
+    });
+  }
+
+
+  async enterPassword(password: string) {
+    await allure.step(`Nháº­p password: ${password}`, async () => {
+      await this.fillInput(LoginPageUI.passwordField, password);
+    });
+  }
+
+
+  async clickLoginButton() {
+    await allure.step('Click nÃºt Login', async () => {
+      await this.waitForElementVisible(LoginPageUI.loginButton);
+      await this.clickElement(LoginPageUI.loginButton, { noWaitAfter: true });
+    });
+  }
+
+  async login(email: string, password: string) {
+    await this.enterEmail(email);
+    await this.enterPassword(password);
+    await this.clickLoginButton();
+  }
+
+  async verifyLoginSuccess() {
+    // Gá»i láº¡i hÃ m á»Ÿ BasePage
+    await this.expectExactURL('http://live.techpanda.org/index.php/customer/account/');
+  }
+
+  async getFieldError(field: string) {
+    return this.getElementText(LoginPageUI.fieldError(field));
+  }
+
+  async getEmailFormatError() {
+    return this.getElementText(LoginPageUI.emailFormatError);
+  }
+
+  async getLoginFailedMessage() {
+    return this.getElementText(LoginPageUI.loginFailedMessage);
+
+  }
+  async getEmailToastError() {
+    // return this.getAttribute(LoginPageUI.emailField, "validationMessage");
+    // 1. Láº¥y ra locator cá»§a Ã´ Email
+    const emailLocator = this.page.locator(LoginPageUI.emailField);
+    // 2. DÃ¹ng evaluate Ä‘á»ƒ láº¥y property "validationMessage" tá»« element
+    // ThÃªm "as HTMLInputElement" vÃ o sau biáº¿n ele
+    const message = await emailLocator.evaluate((ele) => (ele as HTMLInputElement).validationMessage);
+    return message;
+
+  }
+
+
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageObject\MobilePage.ts ====================
+
+import { Page } from '@playwright/test';
+import { BasePage } from '../base/BasePage';
+import { MobilePageUI } from '../pageUI/MobilePageUI';
+import { PageUrl } from '../constants/PageUrl'; 
+
+export class MobilePage extends BasePage {
+    constructor(page: Page) {
+        super(page);
+    }
+
+    async goToMobilePage() {
+       await this.navigateTo(PageUrl.MOBILE);
+    }
+
+    async selectSortBy(option: 'Name' | 'Price') {
+        // DÃ¹ng .first() Ä‘á»ƒ chá»‰ chá»n cÃ¡i dropdown á»Ÿ trÃªn cÃ¹ng
+        await this.page.locator(MobilePageUI.SORT_BY_DROPDOWN).first().selectOption({ label: option });
+        // Chá» web load láº¡i sau khi sort
+        await this.page.waitForLoadState('networkidle'); 
+    }
+
+   /* async getProductNames(): Promise<string[]> {
+        // Láº¥y táº¥t cáº£ tÃªn sáº£n pháº©m trÃªn mÃ n hÃ¬nh gom thÃ nh 1 máº£ng
+        const names = await this.page.locator(MobilePageUI.PRODUCT_NAMES).allInnerTexts();
+        // Tráº£ vá» máº£ng Ä‘Ã£ Ä‘Æ°á»£c xÃ³a khoáº£ng tráº¯ng dÆ° thá»«a
+        return names.map(name => name.trim());
+    }*/
+
+    // Náº¿u gá»i hÃ m allInnerTexts á»Ÿ BasePage thÃ¬ sáº½ viáº¿t nhÆ° tháº¿ nÃ y
+     async getProductNames(): Promise<string[]> {
+         return await this.getAllInnerTexts(MobilePageUI.PRODUCT_NAMES, "Láº¥y danh sÃ¡ch tÃªn sáº£n pháº©m trÃªn mÃ n hÃ¬nh");
+     }
+
+    async getProductPrices(): Promise<number[]> {
+        const pricesText = await this.page.locator(MobilePageUI.PRODUCT_PRICES).allInnerTexts();
+        // XÃ³a dáº¥u $ vÃ  dáº¥u pháº©y, Ã©p kiá»ƒu vá» dáº¡ng sá»‘ (vÃ­ dá»¥: "$130.00" -> 130)
+        return pricesText.map(price => parseFloat(price.replace('$', '').replace(',', '')));
+    }
+
+    async clickListView() {
+        await this.page.locator(MobilePageUI.VIEW_AS_LIST).first().click();
+        await this.page.waitForLoadState('networkidle');
+    }
+
+    async isListViewDisplayed(): Promise<boolean> {
+        return await this.page.locator(MobilePageUI.LIST_VIEW_PRODUCTS).isVisible();
+    }
+
+    async isProductDescriptionVisible(): Promise<boolean> {
+        // Láº¥y Ä‘oáº¡n mÃ´ táº£ cá»§a sáº£n pháº©m Ä‘áº§u tiÃªn xem cÃ³ hiá»ƒn thá»‹ khÃ´ng
+        return await this.page.locator(MobilePageUI.PRODUCT_DESC).first().isVisible();
+    }
+
+    async isListViewIconActive(): Promise<boolean> {
+        // Kiá»ƒm tra xem icon List cÃ³ Ä‘ang á»Ÿ tráº¡ng thÃ¡i Active (in Ä‘áº­m) khÃ´ng
+        return await this.page.locator(MobilePageUI.VIEW_AS_LIST_ACTIVE).first().isVisible();
+    }
+
+
+
+    // Click menu Mobile
+    async clickMobileMenu() {
+        await this.clickElement(MobilePageUI.MENU_MOBILE);
+        //hoáº·c dÃ¹ng getByRole thÃ¬ sáº½ viáº¿t nhÆ° sau
+        //await this.getByRole('link', 'Mobile').click();
+    }
+
+    // Click menu TV
+    async clickTVMenu() {
+        await this.clickElement(MobilePageUI.MENU_TV);
+    }
+
+    // Láº¥y giÃ¡ trá»‹ cá»§a Sony Xperia á»Ÿ trang List
+    async getSonyXperiaPriceInList(): Promise<string> {
+        return await this.getElementText(MobilePageUI.LIST_PAGE_SONY_PRICE);
+    }
+
+    // Click vÃ o tÃªn sáº£n pháº©m Ä‘á»ƒ vÃ o trang Detail
+    async clickSonyXperiaDetail() {
+     // Bá» noWaitAfter Ä‘i Ä‘á»ƒ Playwright tá»± Ä‘á»™ng chá» pháº£n há»“i chuyá»ƒn trang tá»± nhiÃªn
+    await this.clickElement(MobilePageUI.LIST_PAGE_SONY_NAME_LINK);
+  
+     // Äá»£i cho Ä‘áº¿n khi pháº§n tá»­ giÃ¡ cá»§a trang Detail thá»±c sá»± hiá»ƒn thá»‹
+     await this.waitForElementVisible(MobilePageUI.DETAIL_PAGE_SONY_PRICE);
+    }
+
+    // Láº¥y giÃ¡ trá»‹ cá»§a Sony Xperia á»Ÿ trang Detail
+    async getSonyXperiaPriceInDetail(): Promise<string> {
+        return await this.getElementText(MobilePageUI.DETAIL_PAGE_SONY_PRICE);
+    }
+
+    async clickAddToCartSonyXperia() {
+        await this.page.locator(MobilePageUI.ADD_TO_CART_SONY_XPERIA_BUTTON).click();
+}
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageObject\MobilePage_getByRole.ts ====================
+
+import { Locator, Page } from '@playwright/test';
+import { BasePage } from '../base/BasePage';
+import { MobilePageUI_getByRole } from '../pageUI/MobilePageUI_getByRole';
+import { PageUrl } from '../constants/PageUrl';
+
+export class MobilePage_getByRole extends BasePage {
+  constructor(page: Page) {
+    super(page);
+  }
+
+  // ==========================================
+  // 1. THANH ÄIá»€U HÆ¯á»šNG & TOOLBAR
+  // ==========================================
+
+  async goToMobilePage() {
+    await this.navigateTo(PageUrl.MOBILE);
+  }
+
+  // KhÃ³a cá»©ng vÃ o Ä‘Ãºng thanh toolbar trÃªn cÃ¹ng báº±ng .first() Ä‘á»ƒ khÃ´ng bao giá» bá»‹ lá»—i Strict Mode
+  private get topToolbar(): Locator {
+    return this.page.locator('.toolbar').first();
+  }
+
+  async selectSortBy(option: 'Name' | 'Price') {
+    await this.topToolbar.getByRole('combobox', { name: 'Sort By' }).selectOption({ label: option });
+    // DÃ¹ng networkidle Ä‘á»ƒ trang táº£i xong 100% dá»¯ liá»‡u má»›i trÆ°á»›c khi cháº¡y bÆ°á»›c tiáº¿p theo
+    await this.waitForPageLoad('networkidle');
+  }
+
+  async clickListView() {
+    await this.topToolbar.getByRole('link', { name: 'List', exact: true }).click();
+    // Chá» máº¡ng táº£i xong view danh sÃ¡ch
+    await this.waitForPageLoad('networkidle');
+  }
+
+  async isListViewDisplayed(): Promise<boolean> {
+    return await this.page.locator(MobilePageUI_getByRole.LIST_VIEW_CONTAINER).isVisible();
+  }
+
+  async isProductDescriptionVisible(): Promise<boolean> {
+    return await this.page.locator(MobilePageUI_getByRole.PRODUCT_DESC).first().isVisible();
+  }
+
+  async isListViewIconActive(): Promise<boolean> {
+    return await this.topToolbar.locator('strong[title="List"]').isVisible();
+  }
+
+  // ==========================================
+  // 2. KHá»I Xá»¬ LÃ Sáº¢N PHáº¨M CHUNG (GETBYROLE + FILTER)
+  // ==========================================
+
+  /** Äá»‹nh vá»‹ duy nháº¥t 1 tháº» Card sáº£n pháº©m dá»±a trÃªn TÃªn hiá»ƒn thá»‹ */
+  getProductCard(productName: string): Locator {
+    return this.page.locator(MobilePageUI_getByRole.PRODUCT_ITEM).filter({
+      has: this.page.getByRole('heading', { name: productName, exact: true }),
+    });
+  }
+
+  /** Láº¥y giÃ¡ tiá»n cá»§a báº¥t ká»³ sáº£n pháº©m nÃ o theo tÃªn */
+  async getProductPriceByName(productName: string): Promise<string> {
+    const card = this.getProductCard(productName);
+    const priceText = await card.locator(MobilePageUI_getByRole.PRICE).first().innerText();
+    return priceText.trim();
+  }
+
+  /** Báº¥m vÃ o link chi tiáº¿t cá»§a báº¥t ká»³ sáº£n pháº©m nÃ o */
+  async clickProductDetailByName(productName: string) {
+    const card = this.getProductCard(productName);
+    await card.getByRole('heading').getByRole('link').click();
+    await this.waitForElementVisible(MobilePageUI_getByRole.DETAIL_PAGE_PRODUCT_PRICE);
+  }
+
+  /** Báº¥m Add to Cart cá»§a báº¥t ká»³ sáº£n pháº©m nÃ o */
+  async clickAddToCartByName(productName: string) {
+    const card = this.getProductCard(productName);
+    await card.getByRole('button', { name: 'Add to Cart' }).click();
+  }
+
+  // ==========================================
+  // 3. TÆ¯Æ NG THÃCH NGÆ¯á»¢C (CHO CÃC TEST HIá»†N Táº I)
+  // ==========================================
+
+  async getProductNames(): Promise<string[]> {
+    return await this.getAllInnerTexts(
+      MobilePageUI_getByRole.PRODUCT_NAMES,
+      'Láº¥y danh sÃ¡ch tÃªn sáº£n pháº©m trÃªn mÃ n hÃ¬nh'
+    );
+  }
+
+  async getProductPrices(): Promise<number[]> {
+    const pricesText = await this.page.locator(MobilePageUI_getByRole.PRODUCT_PRICES).allInnerTexts();
+    return pricesText.map((price) => parseFloat(price.replace('$', '').replace(',', '')));
+  }
+
+  async getSonyXperiaPriceInList(): Promise<string> {
+    return await this.getProductPriceByName('Sony Xperia');
+  }
+
+  async clickSonyXperiaDetail() {
+    await this.clickProductDetailByName('Sony Xperia');
+  }
+
+  async getSonyXperiaPriceInDetail(): Promise<string> {
+    return await this.getElementText(MobilePageUI_getByRole.DETAIL_PAGE_PRODUCT_PRICE);
+  }
+
+  async clickAddToCartSonyXperia() {
+    await this.clickAddToCartByName('Sony Xperia');
+  }
+
+  // ==========================================
+  // 4. MENU TRANG CHá»¦
+  // ==========================================
+
+  async clickMobileMenu() {
+    await this.page.locator(MobilePageUI_getByRole.NAV_CONTAINER).getByRole('link', { name: 'Mobile', exact: true }).click();
+  }
+
+  async clickTVMenu() {
+    await this.page.locator(MobilePageUI_getByRole.NAV_CONTAINER).getByRole('link', { name: 'TV', exact: true }).click();
+  }
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageObject\ProductPage.ts ====================
+
+import { ProductPageUI } from "../pageUI/ProductPageUI";
+import { BasePage } from '../base/BasePage';
+import { allure } from 'allure-playwright';
+
+export class ProductPage extends BasePage {
+    
+  async addToCart() {
+    await this.clickElement(ProductPageUI.ADD_TO_CART_BUTTON);
+    // xá»­ lÃ½ popup HTML náº¿u cÃ³
+    await this.handleHtmlWarningPopup(
+      ProductPageUI.WARNING_POPUP,
+      ProductPageUI.WARNING_ACCEPT_BUTTON
+    );
+  }
+
+  async addToCartWithBypass() {
+  await this.acceptNextDialog();
+  await this.clickElement(ProductPageUI.ADD_TO_CART_BUTTON);
+  }
+
+  async openCart() {
+    await this.clickElement(ProductPageUI.CART_ICON);
+    await this.clickElement(ProductPageUI.VIEW_CART);
+  }
+}
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageObject\RegisterPage.ts ====================
+
+import { Page, Locator } from '@playwright/test';
+import { BasePage } from '../base/BasePage';
+import { allure } from 'allure-playwright';
+import { RegisterPageUI } from '../pageUI/RegisterPageUI';
+
+
+export class RegisterPage extends BasePage {
+ /* constructor(page: Page) {
+    this.page = page;
+    const bagePage = new BasePage(page) // dÃ¹ng trá»±c tiáº¿p, ko cáº§n káº¿ thÆ°a BÃ¡sePage ná»¯a
+  }*/ 
+
+ /* async navigateToRegisterPage() {
+    await this.page.goto('/');
+  }*/
+
+  async enterFirstname(firstname: string) {
+    await allure.step(`Nháº­p firstname: ${firstname}`, async () => {
+    //await this.page.fill(this.firstnameField, firstname);
+    await this.fillInput(RegisterPageUI.firstnameField, firstname);
+    await this.wait();
+        });
+  }
+
+  async enterLastname(lastname: string) {
+    await allure.step(`Nháº­p lastname: ${lastname}`, async () => {
+    //await this.page.fill(this.lastnameField, lastname);
+    await this.fillInput(RegisterPageUI.lastnameField, lastname);
+    await this.wait();
+    });
+  }
+
+  async enterMiddlename(middlename: string) {
+    await allure.step(`Nháº­p middlename: ${middlename}`, async () => {
+    //await this.page.fill(this.middlenameField, middlename);
+    await this.fillInput(RegisterPageUI.middlenameField, middlename);
+    await this.wait();
+    });
+  }
+
+  async enterEmail(email: string) {
+    await allure.step(`Nháº­p email: ${email}`, async () => {
+    //await this.page.fill(this.emailField, email);
+    await this.fillInput(RegisterPageUI.emailField, email);
+    await this.wait();
+    });
+  }
+
+  async enterPassword(password: string) {
+    await allure.step(`Nháº­p password: ${password}`, async () => {
+    //await this.page.fill(this.passwordField, password);
+    await this.fillInput(RegisterPageUI.passwordField, password);
+    await this.wait();
+    });
+  }
+
+  async enterConfirmPassword(confirmpassword: string) {
+     await allure.step(`Nháº­p confirmpassword: ${confirmpassword}`, async () => {
+    //await this.page.fill(this.confirmpasswordField, confirmpassword);
+    await this.fillInput(RegisterPageUI.confirmpasswordField, confirmpassword);
+    await this.wait();
+     });
+  }
+
+  async checkonSubscribedCheckbox() {
+      await allure.step(`Tick vÃ o Subscribe checkbox`, async () => {
+    await this.page.check(RegisterPageUI.subscribedCheckbox);
+    await this.wait();
+      });
+  }
+
+  async clickRegisterButton(): Promise<void> {
+        await allure.step(`Click nÃºt Register`, async () => {
+    //await this.clickElementByRole('button', 'Register');
+        await this.waitForElementVisible(RegisterPageUI.registerButton);
+        await this.clickElement(RegisterPageUI.registerButton);
+        await this.wait();
+    
+      }); 
+  }
+
+  async register(firstname: string, middlename: string, lastname: string, email: string,
+      password: string, confirmpassword: string) {
+    await this.enterFirstname(firstname);
+    await this.enterMiddlename(middlename);
+    await this.enterLastname(lastname);
+    await this.enterEmail(email);
+    await this.enterPassword(password);
+    await this.enterConfirmPassword(confirmpassword);
+    await this.checkonSubscribedCheckbox();
+    await this.clickRegisterButton();
+  }
+
+  async getFieldError(fieldName: string) {
+    return this.getElementText(RegisterPageUI.fieldError(fieldName));
+  }
+
+  async getPasswordMismatchError() {
+    return await this.getElementText(RegisterPageUI.passwordMismatchError);
+  }
+
+  async getMinLengthPasswordError() {
+    return await this.getElementText(RegisterPageUI.passwordMinLengthError);
+  }
+
+  async getEmailToastError() {
+    return this.getAttribute(RegisterPageUI.emailToastError, "validationMessage");
+  }
+  
+  async getEmailValidationMessage() {
+  //const locator = this.page.locator(RegisterPageUI.emailField);
+  //return await locator.evaluate((el: any) => el.validationMessage);
+  return await this.getValidationMessage("email_address");
+}
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageUI\CartPageUI.ts ====================
+
+export const CartPageUI = {
+  PROCEED_TO_CHECKOUT: "//ul[@class='checkout-types top']//button[@title='Proceed to Checkout']",
+  SUCCESS_MESSAGE: 'li.success-msg span',
+  ERROR_MESSAGE: 'li.error-msg span',  
+  ERROR_QRTY_MESSAGE: 'p.item-msg',
+  COUPON_INPUT: '#coupon_code',
+  APPLY_COUPON_BUTTON: 'button[value="Apply"]',
+  DISCOUNT_TEXT: 'tr:has-text("Discount (GURU50)") td:last-child span',
+  GRAND_TOTAL_TEXT: 'tr:has-text("Grand Total") td:last-child span',
+  QTY_INPUT: 'input[title="Qty"]',
+  UPDATE_BUTTON: 'button[title="Update"]',
+  EMPTY_CART_LINK: 'button[title="Empty Cart"]',
+  // Lá»±a chá»n 1 (Sá»­ dá»¥ng :first-of-type - Chá»n tháº» p Ä‘áº§u tiÃªn)
+  EMPTY_CART_TEXT : '.cart-empty p:first-of-type'
+
+  // Hoáº·c Lá»±a chá»n 2 (Sá»­ dá»¥ng :has-text() - Chá»n tháº» p chá»©a Ä‘oáº¡n vÄƒn báº£n cá»¥ thá»ƒ)
+  // EMPTY_CART_TEXT : '.cart-empty p:has-text("You have no items in your shopping cart.")';
+};
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageUI\CheckoutPageUI.ts ====================
+
+export const CheckoutPageUI = {
+  // Checkout method
+  GUEST_RADIO: "#login\:guest",
+  CONTINUE: "#onepage-guest-register-button",
+
+  // Billing
+  FIRST_NAME: "//input[@name='billing[firstname]']",
+  LAST_NAME: "//input[@name='billing[lastname]']",
+  EMAIL: "//input[@name='billing[email]']",
+  ADDRESS: "//input[@name='billing[street][]' and @title='Street Address']",
+  CITY: "//input[@name='billing[city]']",
+  ZIP: "//input[@name='billing[postcode]']",
+    // ðŸ‘‰ State / Province (dropdown)
+  STATE_PROVINCE : "//select[@name='billing[region_id]']",
+  TELEPHONE: "//input[@name='billing[telephone]']",
+  BILLING_CONTINUE: "#billing-buttons-container button",
+
+
+  // Shipping Method
+  SHIPPING_RADIO: "input[name='shipping_method']",
+  SHIPPING_CONTINUE: "#shipping-method-buttons-container button",
+
+  // Payment
+  PAYMENT_CHECK: "#p_method_checkmo",
+  PAYMENT_CONTINUE: "#payment-buttons-container button",
+
+  // Place order
+  PLACE_ORDER_BUTTON: "button[title='Place Order']",  
+
+  // Success
+  SUCCESS_MESSAGE: ".checkout-onepage-success span"
+};
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageUI\HomePageUI.ts ====================
+
+export const HomePageUI = {
+  FIRST_PRODUCT_LINK: "(//a[text()='Sony Xperia'])[1]", 
+};
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageUI\LoginPageUI.ts ====================
+
+
+export class LoginPageUI {
+
+      static loginButton = '//button[@title="Login"]';
+      static emailField = 'input[id="email"]';
+      static passwordField = 'input#pass';
+      // error messages
+  static fieldError =  (field: string) => `#advice-required-entry-${field}`;
+ static emailFormatError = "#advice-validate-email-email";
+  static loginFailedMessage = ".error-msg span"
+}
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageUI\MobilePageUI.ts ====================
+
+export class MobilePageUI {
+
+  // Toolbar (Láº¥y cÃ¡i Ä‘áº§u tiÃªn Ä‘á»ƒ trÃ¡nh lá»—i strict mode)
+  public static readonly SORT_BY_DROPDOWN = '.toolbar select[title="Sort By"]';
+  public static readonly VIEW_AS_GRID = '.toolbar strong[title="Grid"]';
+  public static readonly VIEW_AS_LIST = '.toolbar a[title="List"]';
+
+  // Product Data
+  public static readonly PRODUCT_NAMES = 'h2.product-name a';
+  public static readonly PRODUCT_PRICES = '.price-box .regular-price .price';
+
+  // Element Ä‘á»ƒ kiá»ƒm tra xem Ä‘Ã£ chuyá»ƒn sang list view thÃ nh cÃ´ng chÆ°a
+  public static readonly LIST_VIEW_PRODUCTS = 'ol.products-list';
+
+  // Pháº§n tá»­ chá»‰ xuáº¥t hiá»‡n á»Ÿ List View
+  public static readonly PRODUCT_DESC = '.products-list .desc.std';
+  // Tráº¡ng thÃ¡i icon List lÃºc Ä‘ang Ä‘Æ°á»£c Active (NÃ³ lÃ  tháº» strong, khÃ´ng pháº£i tháº» a)
+  public static readonly VIEW_AS_LIST_ACTIVE = '.toolbar strong[title="List"]';
+
+  // Menu
+  public static readonly MENU_MOBILE = "a:has-text('Mobile')";
+  public static readonly MENU_TV = "a:has-text('TV')";
+  // Trang danh sÃ¡ch (List Page)
+  public static readonly LIST_PAGE_SONY_NAME_LINK = ".product-name a[title='Sony Xperia']";
+  public static readonly LIST_PAGE_SONY_PRICE = ".item:has(a[title='Sony Xperia']) .price";
+
+  // Trang chi tiáº¿t (Detail Page)
+  public static readonly DETAIL_PAGE_SONY_PRICE = "#product-price-1 .price";
+
+  // Shopping Actions
+  public static readonly ADD_TO_CART_SONY_XPERIA_BUTTON = 'li.item:has-text("Sony Xperia") button[title="Add to Cart"]';
+  // hoáº·c tÆ°Æ¡ng Ä‘Æ°Æ¡ng vá»›i ADD_TO_CART_SONY_XPERIA_BUTTON = 'li.item:has(a[title="Sony Xperia"]) button[title="Add to Cart"]'
+
+}
+
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageUI\MobilePageUI_getByRole.ts ====================
+
+export class MobilePageUI_getByRole {
+  // Container chung
+  public static readonly PRODUCT_ITEM = 'li.item';
+  public static readonly LIST_VIEW_CONTAINER = 'ol.products-list';
+
+  // ThÃ´ng tin sáº£n pháº©m
+  public static readonly PRODUCT_NAMES = 'h2.product-name a';
+  public static readonly PRODUCT_PRICES = '.price-box .regular-price .price';
+  public static readonly PRICE = '.price-box .price';
+  public static readonly PRODUCT_DESC = '.products-list .desc.std';
+
+  // Trang chi tiáº¿t
+  public static readonly DETAIL_PAGE_PRODUCT_PRICE = '.product-view .price-box .price';
+
+  // Menu Header
+  public static readonly NAV_CONTAINER = '#nav';
+}
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageUI\ProductPageUI.ts ====================
+
+export const ProductPageUI = {
+  ADD_TO_CART_BUTTON: "//button[@title='Add to Cart']",
+  CART_ICON: ".skip-cart",
+  VIEW_CART: "a.viewcart",
+   // popup warning (HTML)
+  WARNING_POPUP: "div.ui-dialog", 
+  WARNING_ACCEPT_BUTTON: "button:has-text('Accept')",
+};
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\pageUI\RegisterPageUI.ts ====================
+
+export const RegisterPageUI = {
+
+firstnameField :'input#firstname',
+middlenameField : 'input#middlename',
+lastnameField : 'input#lastname',
+emailField : 'input[id="email_address"]',
+passwordField : 'input#password',
+confirmpasswordField : 'input#confirmation',
+subscribedCheckbox : 'input#is_subscribed',
+registerButton : '//button[@title="Register"]',
+ // error messages
+  fieldError: (field: string) => `#advice-required-entry-${field}`,
+    emailToastError: '#email_address:invalid',
+
+     // Password mismatch error (Magento cÃ³ sáºµn)
+  passwordMismatchError: "#advice-validate-cpassword-confirmation",
+
+  // Password min length
+  passwordMinLengthError: "#advice-validate-password-password"
+}
+
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\ultility\step-decorator.ts ====================
+
+type AnyMethod = (this: any, ...args: any[]) => any;
+
+export function step(description: string) {
+  return function (
+    value: AnyMethod,
+    context: ClassMethodDecoratorContext
+  ) {
+    if (context.kind !== 'method') return;
+
+    return {
+      get() {
+        return async function (...args: any[]) {
+          console.log(`Step: ${description}`);
+          return await value.apply(this, args);
+        };
+      }
+    };
+  };
+}
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\tests\ultility\utils.ts ====================
+
+// HÃ m táº¡o Ä‘á»™ trá»… (chá») trong quÃ¡ trÃ¬nh thá»±c thi
+export const delay = (ms: number = 1000) =>
+  new Promise(resolve => setTimeout(resolve, ms));
+
+
+
+==================== FILE: D:\PlaywrightProject\new-project\playwright.config.ts ====================
+
+import { defineConfig, devices } from '@playwright/test';
+
+/**
+ * Read environment variables from file.
+ * https://github.com/motdotla/dotenv
+ */
+// import dotenv from 'dotenv';
+// import path from 'path';
+// dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+/**
+ * See https://playwright.dev/docs/test-configuration.
+ */
+const isCI = !!process.env.CI;
+
+export default defineConfig({
+  testDir: './tests',
+  timeout: 60_000,
+  /* Run tests in files in parallel */
+  fullyParallel: true,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+  /* Opt out of parallel tests on CI. */
+  workers: process.env.CI ? 1 : 2,
+
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  reporter: [
+    ['list'], // Hiá»ƒn thá»‹ tiáº¿n Ä‘á»™ vÃ  káº¿t quáº£ trÃªn Terminal/Console
+    ['allure-playwright', { outputFolder: 'allure-results' }] // Xuáº¥t dá»¯ liá»‡u cho Allure
+  ],
+
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    baseURL: 'http://live.techpanda.org/index.php/',
+
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
+    //screenshot: 'on',
+    headless: false, // Má»Ÿ trÃ¬nh duyá»‡t Ä‘á»ƒ nhÃ¬n tháº¥y thao tÃ¡c, set á»Ÿ Ä‘Ã¢y thÃ¬ ko cáº§n tick vÃ o Show browser khi cháº¡y test ná»¯a
+    screenshot: 'only-on-failure',
+    video: isCI ? 'retain-on-failure' : 'off',
+    bypassCSP: true,
+    ignoreHTTPSErrors: true,
+  },
+
+  /* Configure projects for major browsers */
+
+  projects: [
+
+    //BÆ¯á»šC A: Äá»‹nh nghÄ©a project Setup (cháº¡y Ä‘áº§u tiÃªn)
+    {
+      name: 'auth-ui',
+      testMatch: '**/auth.setup.ts'
+    },
+
+    // 1. Dá»± Ã¡n cháº¡y Setup báº±ng API (Cháº¡y ngáº§m, siÃªu nhanh)
+    {
+      name: 'auth-api',
+      testMatch: '**/auth-api.setup.ts', // Chá»‰ hÆ°á»›ng vÃ o file setup API má»›i viáº¿t
+    },
+
+    // 2. Dá»± Ã¡n cháº¡y E2E UI trÃªn Chrome (HÆ°á»Ÿng sÃ¡i cookie tá»« file user.json do API táº¡o ra)
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+        ignoreHTTPSErrors: true,
+        launchOptions: {
+          args: ['--disable-features=InsecureFormWarnings', // Thuá»‘c giáº£i cá»§a Chrome
+            '--unsafely-treat-insecure-origin-as-secure=http://live.techpanda.org',
+            '--disable-web-security']
+        },
+      },
+      dependencies: ['auth-ui'],
+    },
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+        ignoreHTTPSErrors: true, // VÆ°á»£t rÃ o https
+        launchOptions: {
+          firefoxUserPrefs: {
+            'security.warn_submit_secure_to_insecure': false,
+            'security.warn_submit_insecure': false,
+            // Táº¯t cáº£nh bÃ¡o mÃ u Ä‘á» dÆ°á»›i Ã´ nháº­p password
+            'security.insecure_field_warning.contextual.enabled': false,
+            'dom.security.https_only_mode': false, // Táº¯t HTTPS-Only Mode náº¿u Ä‘ang báº­t
+            // Táº¯t WebRender pháº§n cá»©ng Ä‘á»ƒ Firefox cháº¡y á»•n Ä‘á»‹nh tuyá»‡t Ä‘á»‘i trÃªn Windows khi cháº¡y Ä‘a luá»“ng
+            'layers.acceleration.disabled': true,
+            'gfx.webrender.all': false,
+          },
+        },
+      },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ]
+
+  /*projects: isCI // Cháº¡y CI CD TrÃªn GithuB chá»‰ cháº¡y Chrome
+  ?[
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] ,       
+        launchOptions: {
+        args: [
+          '--disable-features=InsecureFormWarnings',
+        ],
+      },  
+          },
+    },
+  ]
+   :[ {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] ,
+      ignoreHTTPSErrors: true,
+      launchOptions: {
+        firefoxUserPrefs: {
+          'security.warn_submit_secure_to_insecure': false,
+          'security.warn_submit_insecure': false,
+        },
+      },},
+    },
+
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+
+    /* Test against mobile viewports. */
+  // {
+  //   name: 'Mobile Chrome',
+  //   use: { ...devices['Pixel 5'] },
+  // },
+  // {
+  //   name: 'Mobile Safari',
+  //   use: { ...devices['iPhone 12'] },
+  // },
+
+  /* Test against branded browsers. */
+  // {
+  //   name: 'Microsoft Edge',
+  //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
+  // },
+  // {
+  //   name: 'Google Chrome',
+  //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+  // },
+  //],
+
+  /* Run your local dev server before starting the tests */
+  // webServer: {
+  //   command: 'npm run start',
+  //   url: 'http://127.0.0.1:3000',
+  //   reuseExistingServer: !process.env.CI,
+  // },
+});
+
+// Äoáº¡n khai bÃ¡o ko dÃ¹ng CI/CD
+/*
+projects: [
+    {
+      name: 'chromium',
+      use: { 
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--disable-features=InsecureFormWarnings'],
+        },
+      },
+    },
+    {
+      name: 'firefox',
+      use: { 
+        ...devices['Desktop Firefox'],
+        ignoreHTTPSErrors: true, // VÆ°á»£t rÃ o https
+        launchOptions: {
+          firefoxUserPrefs: {
+            'security.warn_submit_secure_to_insecure': false,
+            'security.warn_submit_insecure': false,
+          },
+        },
+      },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ]*/

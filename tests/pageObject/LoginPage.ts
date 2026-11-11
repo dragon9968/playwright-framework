@@ -6,36 +6,36 @@ import { AllureHelper } from "../helpers/AllureHelper";
 import { allure } from 'allure-playwright';
 
 export class LoginPage extends BasePage {
-    //private emailField = 'input[id="email"]';
-   // private passwordField = 'input#pass';
+  //private emailField = 'input[id="email"]';
+  // private passwordField = 'input#pass';
 
- /* async navigateLoginPage() {
-    await this.page.goto('/');
-  }*/
+  /* async navigateLoginPage() {
+     await this.page.goto('/');
+   }*/
 
-  
+
   async enterEmail(email: string) {
-   await AllureHelper.step(`Nhập email: ${email}`, async () => {
-  // await allure.step(`Nhập email: ${email}`, async () => {
-   // await this.step(`Nhập email: ${email}`, async () => {
+    await AllureHelper.step(`Nhập email: ${email}`, async () => {
+      // await allure.step(`Nhập email: ${email}`, async () => {
+      // await this.step(`Nhập email: ${email}`, async () => {
 
-    await this.fillInput(LoginPageUI.emailField, email);
+      await this.fillInput(LoginPageUI.emailField, email);
     });
   }
- 
+
 
   async enterPassword(password: string) {
-     await allure.step(`Nhập password: ${password}`, async () => {
-    await this.fillInput(LoginPageUI.passwordField, password);
-        });
+    await allure.step(`Nhập password: ${password}`, async () => {
+      await this.fillInput(LoginPageUI.passwordField, password);
+    });
   }
 
 
- async clickLoginButton(): Promise<void> {
-    await allure.step(`Click nút Login`, async () => {
-    //await this.clickElementByRole('button', 'Login');
-    await this.clickElement(LoginPageUI.loginButton);
-      });
+  async clickLoginButton() {
+    await allure.step('Click nút Login', async () => {
+      await this.waitForElementVisible(LoginPageUI.loginButton);
+      await this.clickElement(LoginPageUI.loginButton, { noWaitAfter: true });
+    });
   }
 
   async login(email: string, password: string) {
@@ -49,7 +49,7 @@ export class LoginPage extends BasePage {
     await this.expectExactURL('http://live.techpanda.org/index.php/customer/account/');
   }
 
- async getFieldError(field: string) {
+  async getFieldError(field: string) {
     return this.getElementText(LoginPageUI.fieldError(field));
   }
 
@@ -61,8 +61,8 @@ export class LoginPage extends BasePage {
     return this.getElementText(LoginPageUI.loginFailedMessage);
 
   }
-async getEmailToastError() {
-   // return this.getAttribute(LoginPageUI.emailField, "validationMessage");
+  async getEmailToastError() {
+    // return this.getAttribute(LoginPageUI.emailField, "validationMessage");
     // 1. Lấy ra locator của ô Email
     const emailLocator = this.page.locator(LoginPageUI.emailField);
     // 2. Dùng evaluate để lấy property "validationMessage" từ element

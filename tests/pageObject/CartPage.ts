@@ -27,15 +27,11 @@ export class CartPage extends BasePage {
         return await this.page.locator(CartPageUI.GRAND_TOTAL_TEXT).innerText();
     }
 
-    async enterQuantity(quantity: string) {
-          const qtyInput = this.page.locator(CartPageUI.QTY_INPUT);
-          // Step 1: Chủ động CLICK vào ô Qty trước để kích hoạt sự kiện HIỆN nút Update
-          await qtyInput.click();
-          // Step 2: Xóa sạch số lượng cũ
-          await qtyInput.clear();
-          // Step 3: Gõ số lượng mới vào 
-          // (Dùng pressSequentially thay cho fill để giả lập gõ từng phím như người thật, kích hoạt mọi sự kiện của ô input)
-          await qtyInput.pressSequentially(quantity);
+    async enterQuantity(quantity: string): Promise<void> {
+        const qtyInput = this.page.locator(CartPageUI.QTY_INPUT).first();
+        await qtyInput.fill(quantity);
+        await qtyInput.press('Enter'); // Tự submit form an toàn tuyệt đối
+        await this.page.waitForLoadState('domcontentloaded');
     }
 
     async clickUpdate() {
@@ -49,7 +45,7 @@ export class CartPage extends BasePage {
     async getQuantityErrorMessage(): Promise<string | null> {
         return await this.page.locator(CartPageUI.ERROR_QRTY_MESSAGE).innerText();
     }
-  
+
     async clickEmptyCart() {
         await this.page.locator(CartPageUI.EMPTY_CART_LINK).click();
     }

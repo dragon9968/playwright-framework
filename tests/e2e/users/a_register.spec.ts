@@ -1,18 +1,14 @@
 import { expect } from '@playwright/test';
-import { RegisterPage } from '../pageObject/RegisterPage';
-import { HomePage } from '../pageObject/HomePage';
-import { delay } from "../ultility/utils";
-import { BasePage } from '../base/BasePage';
-import testData from '../data/user_register.json';
-import { test } from '../base/BaseTest'; // Đảm bảo đường dẫn chính xác
+import testData from '../../data/user_register.json';
+import { test } from '../../base/BaseTest'; // Đảm bảo đường dẫn chính xác
 import fs from 'fs';
-import path from 'path';
 import { allure } from 'allure-playwright';
 
 // DÒNG BÙA CHÚ: Ép Playwright KHÔNG dùng "login session" cho riêng file này.
 // Trình duyệt sẽ mở lên ở trạng thái trắng bóc (như ẩn danh).
-//test.use({ storageState: { cookies: [], origins: [] } });
+test.use({ storageState: { cookies: [], origins: [] } });
 
+test.describe('Register feature', () => {
 const generateRandomEmail = (): string => {
   const randomString = Math.random().toString(36).substring(2, 10); // Random alphanumeric string
   return `long_${randomString}@qa.team`;
@@ -26,7 +22,7 @@ const env = process.env.ENV || 'dev';
 //test.describe.configure({ mode: 'parallel' });
 
 test.beforeEach(async ({ page , registerPage, homePage,  env }) => {
-      await registerPage.goTo(env.baseURL);
+      await registerPage.navigateTo(env.baseURL);
   });
 
 test('Open Page', async ({ page, env }) => {
@@ -109,9 +105,9 @@ test('Open Page', async ({ page, env }) => {
 // ❌ CASE 4 – PASSWORD & CONFIRM PASSWORD KHÔNG TRÙNG
    test("Register unsuccessfully when password and confirm password do not match", async ({ registerPage, homePage, page }) => {
     await homePage.click_Menu_Account_Link();
-    await delay();
+
     await homePage.click_Register_Link();
-    await delay();
+
     await registerPage.enterFirstname(testData.firstname);
     await registerPage.enterMiddlename(testData.middlename);
     await registerPage.enterLastname(testData.lastname);
@@ -136,7 +132,7 @@ test('Register successfully with valid credentials', async ({ page, registerPage
   //await bagePage.navigateTo('/');
   await allure.step('Đi tới trang register', async () => {
   //await registerPage.goTo(envConfig.baseURL);
-  await registerPage.goTo(env.baseURL);
+  await registerPage.navigateTo(env.baseURL);
   //await registerPage.navigateToRegisterPage();
   });
   //await page.getByRole('link', { name: 'Account', exact: true }). click();
@@ -161,4 +157,5 @@ test('Register successfully with valid credentials', async ({ page, registerPage
   await expect(page.getByRole('heading', { name: 'My Dashboard' })).toBeVisible();
   await expect(page.getByText('Thank you for registering')).toHaveText('Thank you for registering with Main Website Store.');
       });
+})
 });
