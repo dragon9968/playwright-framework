@@ -1,10 +1,10 @@
 import { expect } from '@playwright/test';
-import { test } from '../base/BaseTest'; // Đảm bảo đường dẫn chính xác
+import { test } from '../../base/BaseTest'; // Đảm bảo đường dẫn chính xác
 import fs from 'fs';
-import path from 'path';
-import { delay } from "../ultility/utils";
+import { delay } from "../../ultility/utils";
 import { allure } from 'allure-playwright';
-import loginData from "../data/user_login_invalid.json";
+import loginData from "../../data/user_login_invalid.json";
+
 // DÒNG BÙA CHÚ: Ép Playwright KHÔNG dùng "login session" cho riêng file này.
 // Trình duyệt sẽ mở lên ở trạng thái trắng bóc (như ẩn danh).
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -30,34 +30,34 @@ const env = process.env.ENV || 'dev';
   fs.readFileSync(path.join(__dirname, `../environments/${env}.json`), 'utf8')
   );*/
   test.beforeEach(async ({ page ,loginPage,  env }) => {
-      await loginPage.goTo(env.baseURL);
+      await loginPage.navigateTo(env.baseURL);
   });
 
    test("CASE 1 – TẤT CẢ FIELD TRỐNG", async ({ homePage, loginPage }) => {
      await homePage.click_Menu_Account_Link();
-     await delay();
+
      await homePage.click_Login_Link();
-     await delay();
+
      await loginPage.clickLoginButton();
-     await delay();
+
 
      const emailError = await loginPage.getFieldError("email");
      const passwordError = await loginPage.getFieldError("pass");
 
      expect(emailError).toBe(loginData.required_error);
      expect(passwordError).toBe(loginData.required_error);
-     await delay();
+ 
   });
 
    test("CASE 2 – EMAIL SAI FORMAT_1", async ({ homePage, loginPage, browserName }) => {
     await homePage.click_Menu_Account_Link();
-    await delay();
+
     await homePage.click_Login_Link();
-    await delay();
+
     await loginPage.enterEmail(loginData.invalid_email_case1);
-    await delay();
+
     await loginPage.enterPassword(loginData.valid_password);
-    await delay();
+
     await loginPage.clickLoginButton();
 
     const error = await loginPage.getEmailToastError();
@@ -70,13 +70,13 @@ const env = process.env.ENV || 'dev';
 
   test("CASE 3 – EMAIL SAI FORMAT_2", async ({ homePage, loginPage, browserName}) => {
     await homePage.click_Menu_Account_Link();
-    await delay();
+
     await homePage.click_Login_Link();
-    await delay();
+
     await loginPage.enterEmail(loginData.invalid_email_case2);
-    await delay();
+
     await loginPage.enterPassword(loginData.valid_password);
-    await delay();
+
     await loginPage.clickLoginButton();
 
     const error = await loginPage.getEmailToastError();
@@ -88,13 +88,13 @@ const env = process.env.ENV || 'dev';
 
   test("CASE 4 – EMAIL SAI FORMAT_3", async ({ homePage, loginPage }) => {
     await homePage.click_Menu_Account_Link();
-    await delay();
+
     await homePage.click_Login_Link();
-    await delay();
+
     await loginPage.enterEmail(loginData.invalid_email_case3);
-    await delay();
+
     await loginPage.enterPassword(loginData.valid_password);
-    await delay();
+
     await loginPage.clickLoginButton();
 
     const error = await loginPage.getEmailFormatError();
@@ -107,14 +107,14 @@ const env = process.env.ENV || 'dev';
 
    test("CASE 5 – EMAIL KHÔNG TỒN TẠI", async ({ homePage, loginPage }) => {
     await homePage.click_Menu_Account_Link();
-    await delay();
+
     await homePage.click_Login_Link();
-    await delay();
+
     await loginPage.login(loginData.wrong_email, loginData.wrong_password);
 
     const message = await loginPage.getLoginFailedMessage();
     expect(message).toBe(loginData.login_failed_message);
-    await delay();
+
   });
 
 
@@ -127,8 +127,7 @@ const env = process.env.ENV || 'dev';
     await loginPage.navigateTo(env.baseURL);
     });
 
-
-    await allure.step('Bấm vào Menu Account', async () => {
+    await loginPage.step('Bấm vào Menu Account', async () => {
     await homePage.click_Menu_Account_Link();
     });
 

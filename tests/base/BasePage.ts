@@ -1,12 +1,12 @@
-//BasePage -> Base Test -> Fixtures → Page Object → Page UI  → Data -> Tests
 import { Page, Locator, expect } from '@playwright/test';
 import { allure } from 'allure-playwright';
 
-type role = 
-  | 'alert' | 'alertdialog'| 'application'| 'article'| 'banner'| 'button'| 'checkbox'| 'code'| 'combobox'| 'complementary'| 'dialog'| 'document'| 'form'| 'grid'| 'group'
-  | 'heading'| 'link'| 'list'| 'listbox'| 'listitem'| 'main'| 'marquee'| 'menu'| 'menuitem'| 'menuitemcheckbox'| 'menuitemradio'| 'navigation'| 'note'| 'option'
-  | 'presentation'| 'progressbar'| 'radio'| 'radiogroup'| 'region'| 'row'| 'rowgroup'| 'rowheader'| 'scrollbar'| 'search'| 'separator'| 'slider'| 'spinbutton'
-  | 'status'| 'tab'| 'tabpanel'| 'textbox'| 'timer'| 'toolbar'| 'tooltip' | 'tree'| 'treeitem';
+// Định nghĩa sẵn các Role phổ biến để VS Code tự động gợi ý (IntelliSense)
+type CustomAriaRole =
+  | 'alert' | 'button' | 'checkbox' | 'combobox' | 'dialog' | 'heading'
+  | 'link' | 'listbox' | 'menu' | 'menuitem' | 'option' | 'progressbar'
+  | 'radio' | 'scrollbar' | 'search' | 'slider' | 'spinbutton'
+  | 'status' | 'tab' | 'tabpanel' | 'textbox' | 'tooltip' | 'tree' | string;
 
 export class BasePage {
   protected page: Page;
@@ -14,158 +14,262 @@ export class BasePage {
   constructor(page: Page) {
     this.page = page;
   }
-  
-  
-  // Hàm chụp screenshot ở từng step, nếu viết hàm riêng ở file auto-step.ts thì ko cần dùng ở đây nữa
+
+  // ==========================================
+  // 1. ALLURE STEP WRAPPER (Tự động log & chụp ảnh)
+  // ==========================================
+  // tests/base/BasePage.ts
   async step<T>(message: string, action: () => Promise<T>): Promise<T> {
-        // 1. Tạo một cái "giỏ" trống ở bên ngoài hàm allure
-        let result: T; 
+    let result: T;
+    await allure.step(message, async () => {
+      try {
+        result = await action();
+        const img = await this.page.screenshot();
+        await allure.attachment(`Screenshot - ${message}`, img, "image/png");
+      } catch (error) {
+        // Chỉ chụp ảnh nếu trang vẫn còn mở (tránh lỗi khi bị timeout đóng browser)
+        try {
+          if (!this.page.isClosed()) {
+            const img = await this.page.screenshot();
+            await allure.attachment(`Error Screenshot - ${message}`, img, "image/png");
+          }
+        } catch {
+          // Bỏ qua lỗi chụp ảnh khi browser đã bị kill
+        }
+        throw error;
+      }
+    });
+    return result!;
+  }
 
-        // 2. Chạy allure.step (không cần nó return gì cả, chiều ý nó là void)
-        await allure.step(message, async () => {
-            try {
-                // Hứng kết quả vào cái "giỏ" đã tạo ở ngoài
-                result = await action(); 
-                
-                // Screenshot ALWAYS
-                const img = await this.page.screenshot();
-                await allure.attachment(`Screenshot - ${message}`, img, "image/png");
-                
-            } catch (error) {
-                // Screenshot on FAIL
-                const img = await this.page.screenshot();
-                await allure.attachment(`Error Screenshot - ${message}`, img, "image/png");
-                throw error;
-            }
-        });
-
-        // 3. Trả về cái giỏ đã chứa đồ (Lúc này đã thoát ra khỏi phạm vi của allure.step)
-        // Chữ "!" để báo cho TypeScript biết chắc chắn biến này sẽ có dữ liệu
-        return result!; 
-    }
-
-
-  // ===== Hành động cơ bản =====
-  getByRole(role: string, name: string): Locator {
-    // Removed async keyword as this method doesn't need to await anything
+  // ==========================================
+  // 2. TÌM KIẾM PHẦN TỬ (LOCATORS)
+  // ==========================================
+  getByRole(role: CustomAriaRole, name: string): Locator {
     return this.page.getByRole(role as any, { name });
   }
 
-  async waitForElement(selector: string) {
-    await this.page.waitForSelector(selector);
+  // ==========================================
+  // 3. HÀNH ĐỘNG CƠ BẢN (ACTIONS)
+  // ==========================================
+  async clickElement(selector: string, options?: { noWaitAfter?: boolean; force?: boolean; clickCount?: number }) {
+    await this.page.locator(selector).click(options);
   }
 
-  async waitForVisible(selector: string) {
-    await this.page.waitForSelector(selector);
+  async dblClickElement(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).dblclick(options);
   }
 
-  async clickElement(selector: string) {
-    //await this.page.click(selector);
-    await this.page.locator(selector).click();
+  async rightClickElement(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).click({ ...options, button: 'right' });
   }
 
-  async clickElementByRole(role: string, name: string) {
-    const locator = this.page.getByRole(role as any, { name });
-    await locator.click();
+  async clickElementByRole(role: CustomAriaRole, name: string) {
+    await this.page.getByRole(role as any, { name }).click();
+  }
+
+  async clickByJS(selector: string): Promise<void> {
+    await this.page.locator(selector).evaluate((el: any) => {
+      setTimeout(() => el.click(), 0);
+    });
   }
 
   async fillInput(selector: string, value: string) {
-    await this.page.fill(selector, value);
+    await this.page.locator(selector).fill(value);
   }
 
-  async fillInputByRole(role: string, name: string, value: string): Promise<void> {
-    const locator = this.page.getByRole(role as any, { name });
-    await locator.fill(value);
+  async fillInputByRole(role: CustomAriaRole, name: string, value: string) {
+    await this.page.getByRole(role as any, { name }).fill(value);
+  }
+
+  // Thay thế cho hàm type() đã bị Playwright gạch bỏ (deprecated)
+  // Gõ từng ký tự một với độ trễ (delay), rất tốt để test các ô Search có Auto-suggest
+  async typeSequentially(selector: string, value: string, delayMs: number = 100) {
+    await this.page.locator(selector).pressSequentially(value, { delay: delayMs });
+  }
+
+  async clearInput(selector: string) {
+    await this.page.locator(selector).clear();
   }
 
   async press(selector: string, key: string) {
-    await this.page.press(selector, key);
+    await this.page.locator(selector).press(key);
   }
 
-  async hover(selector: string) {
-    await this.page.hover(selector);
+  async hover(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).hover(options);
   }
 
-  async check(selector: string) {
-    await this.page.check(selector);
+  async focus(selector: string) {
+    await this.page.locator(selector).focus();
   }
 
-  async uncheck(selector: string) {
-    await this.page.uncheck(selector);
+  async check(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).check(options);
   }
 
-  async select(selector: string, value: string) {
-    await this.page.selectOption(selector, value);
+  async uncheck(selector: string, options?: { force?: boolean }) {
+    await this.page.locator(selector).uncheck(options);
   }
 
-  async upload(selector: string, filePath: string) {
-    await this.page.setInputFiles(selector, filePath);
+  async setChecked(selector: string, checkedState: boolean) {
+    await this.page.locator(selector).setChecked(checkedState);
   }
 
+  async selectOption(selector: string, value: string) {
+    await this.page.locator(selector).selectOption(value);
+  }
+
+  async uploadFile(selector: string, filePath: string | string[]) {
+    await this.page.locator(selector).setInputFiles(filePath);
+  }
+
+  async dragAndDrop(sourceSelector: string, targetSelector: string) {
+    await this.page.locator(sourceSelector).dragTo(this.page.locator(targetSelector));
+  }
+
+  async scrollIntoView(selector: string) {
+    await this.page.locator(selector).scrollIntoViewIfNeeded();
+  }
+
+  async dispatchEvent(selector: string, type: string) {
+    await this.page.locator(selector).dispatchEvent(type);
+  }
+
+  // ==========================================
+  // 4. LẤY TRẠNG THÁI & DỮ LIỆU (GETTERS)
+  // ==========================================
   async getElementText(selector: string): Promise<string> {
-    return (await this.page.textContent(selector)) || '';
+    return (await this.page.locator(selector).textContent())?.trim() || '';
   }
 
-  async isVisible(selector: string): Promise<boolean> {
-    return await this.page.isVisible(selector);
+  async getAllInnerTexts(selector: string, stepMessage?: string): Promise<string[]> {
+    const action = async () => {
+      const elements = this.page.locator(selector);
+      const texts = await elements.allInnerTexts();
+      return texts.map(text => text.trim());
+    };
+
+    if (stepMessage) {
+      return await this.step(stepMessage, action);
+    }
+    return await action();
   }
 
-   async getValue(selector: string) {
-    return await this.page.inputValue(selector);
+  async getInputValue(selector: string): Promise<string> {
+    return await this.page.locator(selector).inputValue();
   }
 
-  async count(selector: string) {
+  async getAttribute(selector: string, attr: string): Promise<string | null> {
+    return await this.page.locator(selector).getAttribute(attr);
+  }
+
+  async getCount(selector: string): Promise<number> {
     return await this.page.locator(selector).count();
   }
 
-
-  // ===== Expect / Assert =====
-  async expectVisible(selector: string) {
-    await expect(this.page.locator(selector)).toBeVisible();
+  // CHUẨN MỚI: Dùng locator().isVisible() thay vì page.isVisible()
+  async isVisible(selector: string): Promise<boolean> {
+    return await this.page.locator(selector).isVisible();
   }
 
-  async expectHidden(selector: string) {
-    await expect(this.page.locator(selector)).toBeHidden();
+  async isEnabled(selector: string): Promise<boolean> {
+    return await this.page.locator(selector).isEnabled();
   }
 
-  async expectText(selector: string, expected: string) {
-    await expect(this.page.locator(selector)).toHaveText(expected);
+  async isChecked(selector: string): Promise<boolean> {
+    return await this.page.locator(selector).isChecked();
   }
 
-  async expectUrlContains(expected: string) {
-    await expect(this.page).toHaveURL(new RegExp(expected));
+  // ==========================================
+  // 5. CƠ CHẾ ĐỒNG BỘ CHỜ ĐỢI (WAITING STRATEGIES)
+  // ==========================================
+  async waitForElementVisible(selector: string, timeout?: number) {
+    await this.page.locator(selector).waitFor({ state: 'visible', timeout });
   }
 
-  async expectTitleContains(expected: string) {
-    await expect(this.page).toHaveTitle(new RegExp(expected));
+  async waitForElementHidden(selector: string, timeout?: number) {
+    await this.page.locator(selector).waitFor({ state: 'hidden', timeout });
   }
 
-  // ✅ Kiểm tra URL chứa một phần
-  async expectURLContains(pathPart: string) {
-    await expect(this.page).toHaveURL(new RegExp(pathPart));
+  async waitForElementAttached(selector: string, timeout?: number) {
+    await this.page.locator(selector).waitFor({ state: 'attached', timeout });
   }
 
-  // ✅ Kiểm tra URL khớp chính xác
+  async waitForPageLoad(state: 'load' | 'domcontentloaded' | 'networkidle' = 'load') {
+    await this.page.waitForLoadState(state);
+  }
+
+  async wait(ms: number = 1000) {
+    // Chỉ dùng khi thực sự cần thiết, hạn chế tối đa Hard Sleep
+    await this.page.waitForTimeout(ms);
+  }
+
+  // ==========================================
+  // 6. EXPECTATIONS / ASSERTIONS (WEB-FIRST)
+  // ==========================================
+  async expectVisible(selector: string, timeout?: number) {
+    await expect(this.page.locator(selector)).toBeVisible({ timeout });
+  }
+
+  async expectHidden(selector: string, timeout?: number) {
+    await expect(this.page.locator(selector)).toBeHidden({ timeout });
+  }
+
+  async expectText(selector: string, expectedText: string) {
+    await expect(this.page.locator(selector)).toHaveText(expectedText);
+  }
+
+  async expectContainsText(selector: string, expectedText: string) {
+    await expect(this.page.locator(selector)).toContainText(expectedText);
+  }
+
+  async expectValue(selector: string, expectedValue: string) {
+    await expect(this.page.locator(selector)).toHaveValue(expectedValue);
+  }
+
+  async expectAttribute(selector: string, attr: string, expectedValue: string | RegExp) {
+    await expect(this.page.locator(selector)).toHaveAttribute(attr, expectedValue);
+  }
+
+  async expectCount(selector: string, expectedCount: number) {
+    await expect(this.page.locator(selector)).toHaveCount(expectedCount);
+  }
+
+  async expectEnabled(selector: string) {
+    await expect(this.page.locator(selector)).toBeEnabled();
+  }
+
+  async expectDisabled(selector: string) {
+    await expect(this.page.locator(selector)).toBeDisabled();
+  }
+
+  async expectChecked(selector: string, state: boolean = true) {
+    await expect(this.page.locator(selector)).toBeChecked({ checked: state });
+  }
+
+  async expectEmpty(selector: string) {
+    await expect(this.page.locator(selector)).toBeEmpty();
+  }
+
   async expectExactURL(expectedURL: string) {
     await expect(this.page).toHaveURL(expectedURL);
   }
 
-  // ✅ (tùy chọn) Kiểm tra tiêu đề trang
-  async expectTitle(title: string) {
+  async expectURLContains(pathPart: string) {
+    await expect(this.page).toHaveURL(new RegExp(pathPart));
+  }
+
+  async expectTitle(title: string | RegExp) {
     await expect(this.page).toHaveTitle(title);
   }
 
-// ===== Điều hướng và xử lý trang =====
-
+  // ==========================================
+  // 7. ĐIỀU HƯỚNG & XỬ LÝ TRANG (NAVIGATION & DIALOGS)
+  // ==========================================
   async navigateTo(url: string) {
-    await allure.step(`Chuyển hướng đến trang: ${url}`, async () => {
-    await this.page.goto(url);
-        });
-  }
-
-  async goTo(url: string) {
-    await allure.step(`Đi đến: ${url}`, async () => {
-    await this.page.goto(url);
+    await allure.step(`Đi tới trang: ${url}`, async () => {
+      await this.page.goto(url);
     });
   }
 
@@ -177,10 +281,6 @@ export class BasePage {
     await this.page.goBack();
   }
 
-  async goForward() {
-    await this.page.goForward();
-  }
-
   async scrollToBottom() {
     await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   }
@@ -189,39 +289,30 @@ export class BasePage {
     await this.page.evaluate(() => window.scrollTo(0, 0));
   }
 
-  // ===== Screenshot / Debug =====
-  async screenshot(name: string) {
-    await this.page.screenshot({ path: `screenshots/${name}.png` });
+  // Xử lý Alert / Confirm dialog (Cần gọi trước hàm click gây ra dialog)
+  async acceptNextDialog(promptText?: string) {
+    this.page.once('dialog', async (dialog) => {
+      console.log('Dialog message:', dialog.message());
+      await dialog.accept(promptText);
+    });
   }
 
-  async pause() {
-    await this.page.pause();
+  async dismissNextDialog() {
+    this.page.once('dialog', async (dialog) => {
+      await dialog.dismiss();
+    });
   }
 
-  // ===== Tiện ích khác =====
-  async wait(ms: number = 1000) {
-    await this.page.waitForTimeout(ms);
-  }
-
-  async getAttribute(selector: string, attr: string) {
-    return await this.page.getAttribute(selector, attr);
-  }
-
-  //** LẤY BROWSER VALIDATION MESSAGE CHO FIELD EMAIL/PASSWORD */
-  async getValidationMessageById(fieldId: string) {
-    const locator = this.page.locator(`#${fieldId}`);
-    return await locator.evaluate((el: any) => el.validationMessage);
-  }
-
-  /** LẤY VALIDATION MESSAGE DÙNG SELECTOR (nếu field không có id) */
-  async getValidationMessage(selector: string ) {
+  // ==========================================
+  // 8. TIỆN ÍCH DỰ ÁN (PROJECT UTILITIES)
+  // ==========================================
+  async getValidationMessage(selector: string): Promise<string> {
     const locator = this.page.locator(selector);
-    return await locator.evaluate((el: any) => el.validationMessage);
+    return await locator.evaluate((el: HTMLInputElement) => el.validationMessage);
   }
 
   async bypassInsecureFormIfPresent() {
     const sendAnywayBtn = this.page.getByRole('button', { name: 'Send anyway' });
-
     if (await sendAnywayBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       console.log('⚠ Detected insecure form, clicking Send anyway');
       await sendAnywayBtn.click();
@@ -229,34 +320,14 @@ export class BasePage {
     }
   }
 
-  async acceptNextDialog() {
-    this.page.once('dialog', async (dialog) => {
-      console.log('Dialog message:', dialog.message());
-      await dialog.accept(); // click Continue
-    });
-  }
-
-  // 👉 HÀM BYPASS POPUP HTML
-  async handleHtmlWarningPopup(
-    popupLocator: string,
-    acceptButtonLocator: string
-  ) {
-    const popup = this.page.locator(popupLocator);
-
+  async handleHtmlWarningPopup(popupSelector: string, acceptBtnSelector: string) {
+    const popup = this.page.locator(popupSelector);
     if (await popup.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await this.page.locator(acceptButtonLocator).click();
+      await this.page.locator(acceptBtnSelector).click();
     }
   }
 
-
-  // 1. Hàm bọc hành động LẤY TOÀN BỘ TEXT của một danh sách phần tử
-    async getAllInnerTexts(selector: string, stepMessage: string): Promise<string[]> {
-        return await this.step(stepMessage, async () => {
-            const elements = this.page.locator(selector);
-            const texts = await elements.allInnerTexts();
-            // Tiện tay anh em mình tự động trim() sạch khoảng trắng cho toàn bộ mảng luôn
-            return texts.map(text => text.trim()); 
-        });
-    }
-  
+  async pause() {
+    await this.page.pause();
+  }
 }

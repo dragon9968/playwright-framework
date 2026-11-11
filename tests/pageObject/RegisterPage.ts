@@ -5,12 +5,10 @@ import { RegisterPageUI } from '../pageUI/RegisterPageUI';
 
 
 export class RegisterPage extends BasePage {
-/*   constructor(page: Page) {
+ /* constructor(page: Page) {
     this.page = page;
-    this.registerButton = page.getByRole('button', { name: 'Register' });
-    const bagePage = new BasePage(page)
-
-  } */
+    const bagePage = new BasePage(page) // dùng trực tiếp, ko cần kế thưa BásePage nữa
+  }*/ 
 
  /* async navigateToRegisterPage() {
     await this.page.goto('/');
@@ -72,12 +70,11 @@ export class RegisterPage extends BasePage {
   }
 
   async clickRegisterButton(): Promise<void> {
-      await allure.step(`Click nút Register`, async () => {
+        await allure.step(`Click nút Register`, async () => {
     //await this.clickElementByRole('button', 'Register');
+        await this.waitForElementVisible(RegisterPageUI.registerButton);
         await this.clickElement(RegisterPageUI.registerButton);
-        await this.wait();
-    
-      });
+      }); 
   }
 
   async register(firstname: string, middlename: string, lastname: string, email: string,
@@ -111,6 +108,6 @@ export class RegisterPage extends BasePage {
   async getEmailValidationMessage() {
   //const locator = this.page.locator(RegisterPageUI.emailField);
   //return await locator.evaluate((el: any) => el.validationMessage);
-  return await this.getValidationMessageById("email_address");
+  return await this.getValidationMessage(RegisterPageUI.emailField);
 }
 }
