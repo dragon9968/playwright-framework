@@ -22,8 +22,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 2 : 2,
+  /* Opt out of parallel tests on CI. 
+  CI chạy 1 luồng vì máy chủ CI miễn phí rất yếu, còn dưới local để máy tự chọn theo số nhân CPU.
+  Nếu set process.env.CI ? 2 : 2 thì Dù chạy ở dưới máy hay chạy trên CI thì đều dùng đúng 2 workers song song*/
+  workers: process.env.CI ? 1 : undefined,
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
