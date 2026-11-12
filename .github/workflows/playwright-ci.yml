@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 24
 
       - name: Install dependencies
         run: npm ci
@@ -65,3 +65,10 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./allure-report
+
+      # 5. Gửi thẻ báo cáo kết quả tới Google Chat / MS Teams
+      - name: Send Test Summary to Chat
+        if: always()
+        env:
+          GOOGLE_CHAT_WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+        run: node scripts/notify-chat.js

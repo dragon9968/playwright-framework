@@ -67,8 +67,6 @@ export class MobilePage extends BasePage {
         return await this.page.locator(MobilePageUI.VIEW_AS_LIST_ACTIVE).first().isVisible();
     }
 
-
-
     // Click menu Mobile
     async clickMobileMenu() {
         await this.clickElement(MobilePageUI.MENU_MOBILE);
