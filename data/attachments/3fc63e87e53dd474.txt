@@ -1,5 +1,0 @@
---- [API Auth] Bước 1: Gọi GET trang Login để nhặt Form Key... ---
-👉 Đã bóc tách thành công mã Form Key động: DYnaWyqCnGVybsJI
---- [API Auth] Bước 2: Gửi request POST đăng nhập kèm chìa khóa bảo mật... ---
-[API Auth] Trang đích cuối cùng đạt được: http://live.techpanda.org/index.php/customer/account/
-✅ [API Auth] ĐĂNG NHẬP THÀNH CÔNG! Đã đồng bộ Session Cookie.
