@@ -71,4 +71,4 @@ jobs:
         if: always()
         env:
           GOOGLE_CHAT_WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
-        run: node scripts/notify-chat.js
+        run: node scripts/notify-chat.ts
