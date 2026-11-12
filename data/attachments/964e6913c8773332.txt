@@ -1,9 +1,0 @@
-
-🚀 --- BẮT ĐẦU TEST REGISTER API ---
-👉 Email sử dụng cho lượt test này: long_api_1794370266035@gmail.com
---- [Register API] Bước 1: Gọi GET để nhặt Form Key mồi... ---
-   -> Nhặt được mã Form Key: oYsIrrO6uW6MtDW5
---- [Register API] Bước 2: Gửi request POST tạo tài khoản... ---
---- [Register API] Bước 3: Tiến hành Verify kết quả... ---
-   -> Trang đích cuối cùng đạt được: http://live.techpanda.org/index.php/customer/account/index/
-✅ KẾT QUẢ: Chức năng Đăng ký qua API hoạt động HOÀN HẢO!
