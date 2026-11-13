@@ -1,0 +1,11 @@
+
+=== [TEST STEP]: Pre-condition: Mở trang chủ và đi tới màn hình Register ===
+▶ [STEP]: Đi tới trang: http://live.techpanda.org/index.php
+▶ [STEP]: Nhập firstname: long
+▶ [STEP]: Nhập middlename: dinh
+▶ [STEP]: Nhập lastname: nguyen
+▶ [STEP]: Nhập email: longnguyen@
+▶ [STEP]: Nhập password: 123456
+▶ [STEP]: Nhập confirmpassword: 123456
+▶ [STEP]: Click nút Register
+▶ [STEP]: Xác minh thông báo lỗi định dạng Email: "Enter an email address"

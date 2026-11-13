@@ -1,2 +1,0 @@
-Giá trị thực tế lấy được: Please enter a valid email address. For example johndoe@domain.com.
-Giá trị mong đợi trong data: Please enter a valid email address. For example johndoe@domain.com.

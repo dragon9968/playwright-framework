@@ -1,0 +1,11 @@
+
+=== [TEST STEP]: Pre-condition: Mở trang chủ và đi tới màn hình Register ===
+▶ [STEP]: Đi tới trang: http://live.techpanda.org/index.php
+▶ [STEP]: Nhập firstname: long
+▶ [STEP]: Nhập middlename: dinh
+▶ [STEP]: Nhập lastname: nguyen
+▶ [STEP]: Nhập email: long_nguyen@qa.team
+▶ [STEP]: Nhập password: 123
+▶ [STEP]: Nhập confirmpassword: 123
+▶ [STEP]: Click nút Register
+▶ [STEP]: Xác minh lỗi độ dài mật khẩu tối thiểu: "Please enter 6 or more characters without leading or trailing spaces."

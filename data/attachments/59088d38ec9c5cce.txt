@@ -1,6 +1,0 @@
-Giá trị thực tế lấy được: Enter an email address
-Giá trị mong đợi trong data: {
-  chromium: "Please include an '@' in the email address. 'long' is missing an '@'.",
-  firefox: 'Please enter an email address.',
-  webkit: 'Enter an email address'
-}

@@ -1,0 +1,2 @@
+▶ [STEP]: Đi tới trang: mobile.html
+▶ [STEP]: Lấy danh sách tên sản phẩm trên màn hình

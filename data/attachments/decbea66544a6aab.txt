@@ -1,2 +1,0 @@
-discountAmount: -$5.00
-grandTotal: $100.00

@@ -1,0 +1,11 @@
+
+=== [TEST STEP]: Pre-condition: Mở trang chủ và đi tới màn hình Login ===
+▶ [STEP]: Đi tới trang: http://live.techpanda.org/index.php
+
+=== [TEST STEP]: 1. Nhập email thiếu @ và bấm Login ===
+▶ [STEP]: Nhập email: long
+▶ [STEP]: Nhập password: 123456
+▶ [STEP]: Bấm nút Login
+
+=== [TEST STEP]: 2. Xác minh thông báo lỗi của trình duyệt tại ô Email ===
+▶ [STEP]: Xác minh thông báo lỗi trình duyệt tại ô Email: "Enter an email address"

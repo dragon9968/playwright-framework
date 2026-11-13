@@ -1,0 +1,3 @@
+▶ [STEP]: Đi tới trang: mobile.html
+Giá ở trang List: $100.00
+Giá ở trang Detail: $100.00
