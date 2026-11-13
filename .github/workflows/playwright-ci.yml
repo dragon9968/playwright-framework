@@ -13,7 +13,8 @@ on:
 jobs:
   playwright-test:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write  # Cho phép action tạo và push vào nhánh gh-pages
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -21,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 24
 
       - name: Install dependencies
         run: npm ci
@@ -49,3 +50,25 @@ jobs:
           name: allure-results
           path: allure-results/
           retention-days: 7
+
+      # 3. Tạo thư mục Allure Report HTML từ kết quả thô
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          npm install -g allure-commandline --save-dev
+          npx allure generate allure-results --clean -o allure-report
+
+      # 4. Đẩy trang Allure Report lên nhánh gh-pages để xem online
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+
+      # 5. Gửi thẻ báo cáo kết quả tới Google Chat / MS Teams
+      - name: Send Test Summary to Chat
+        if: always()
+        env:
+          GOOGLE_CHAT_WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+        run: node scripts/notify-chat.ts

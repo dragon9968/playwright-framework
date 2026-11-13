@@ -1,5 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
-import { allure } from 'allure-playwright';
+import { Page,test, Locator, expect } from '@playwright/test';
 
 // Định nghĩa sẵn các Role phổ biến để VS Code tự động gợi ý (IntelliSense)
 type CustomAriaRole =
@@ -15,31 +14,12 @@ export class BasePage {
     this.page = page;
   }
 
-  // ==========================================
-  // 1. ALLURE STEP WRAPPER (Tự động log & chụp ảnh)
-  // ==========================================
-  // tests/base/BasePage.ts
+  // Hàm này chỉ đáng giữ lại nếu có thêm logic dùng chung (ví dụ: in log trên CI)
   async step<T>(message: string, action: () => Promise<T>): Promise<T> {
-    let result: T;
-    await allure.step(message, async () => {
-      try {
-        result = await action();
-        const img = await this.page.screenshot();
-        await allure.attachment(`Screenshot - ${message}`, img, "image/png");
-      } catch (error) {
-        // Chỉ chụp ảnh nếu trang vẫn còn mở (tránh lỗi khi bị timeout đóng browser)
-        try {
-          if (!this.page.isClosed()) {
-            const img = await this.page.screenshot();
-            await allure.attachment(`Error Screenshot - ${message}`, img, "image/png");
-          }
-        } catch {
-          // Bỏ qua lỗi chụp ảnh khi browser đã bị kill
-        }
-        throw error;
-      }
-    });
-    return result!;
+    console.log(`▶ [STEP]: ${message}`);
+    return await test.step(message, async () => {
+      return await action();
+    }, { box: true }); // Gom gọn stacktrace khi báo lỗi
   }
 
   // ==========================================
@@ -264,11 +244,18 @@ export class BasePage {
     await expect(this.page).toHaveTitle(title);
   }
 
+  // Xác minh thông báo lỗi mặc định của trình duyệt (validationMessage)
+  async expectValidationMessage(selector: string, expectedMessage: string) {
+    await expect
+      .poll(async () => await this.getValidationMessage(selector))
+      .toBe(expectedMessage);
+  }
+
   // ==========================================
   // 7. ĐIỀU HƯỚNG & XỬ LÝ TRANG (NAVIGATION & DIALOGS)
   // ==========================================
   async navigateTo(url: string) {
-    await allure.step(`Đi tới trang: ${url}`, async () => {
+    await this.step(`Đi tới trang: ${url}`, async () => {
       await this.page.goto(url);
     });
   }

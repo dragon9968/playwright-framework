@@ -1,161 +1,101 @@
 import { expect } from '@playwright/test';
 import testData from '../../data/user_register.json';
-import { test } from '../../base/BaseTest'; // Đảm bảo đường dẫn chính xác
+import { test, logStep } from '../../base/BaseTest';
 import fs from 'fs';
-import { allure } from 'allure-playwright';
+import { DataGenerator } from '../../helpers/DataGenerator';
 
 // DÒNG BÙA CHÚ: Ép Playwright KHÔNG dùng "login session" cho riêng file này.
 // Trình duyệt sẽ mở lên ở trạng thái trắng bóc (như ẩn danh).
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Register feature', () => {
-const generateRandomEmail = (): string => {
-  const randomString = Math.random().toString(36).substring(2, 10); // Random alphanumeric string
-  return `long_${randomString}@qa.team`;
-};
-
-/* Khai báo trong fixtures để dùng chung rồi thì ko cần khai báo trong test case nữa
-const env = process.env.ENV || 'dev';
-  const envConfig = JSON.parse(
-  fs.readFileSync(path.join(__dirname, `../environments/${env}.json`), 'utf8')
-  );*/
-//test.describe.configure({ mode: 'parallel' });
-
-test.beforeEach(async ({ page , registerPage, homePage,  env }) => {
-      await registerPage.navigateTo(env.baseURL);
-  });
-
-test('Open Page', async ({ page, env }) => {
-  //await page.goto(envConfig.baseURL);
-  // await page.goto(env.baseURL);
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Home page/);
-});
-
-// ❌ CASE 1 – TẤT CẢ FIELD ĐỂ TRỐNG
-  test("Register fail: all fields empty", async ({ registerPage, homePage, env }) => {
+  //test.describe.configure({ mode: 'parallel' });
+  test.beforeEach(async ({ homePage, env }) => {
+    await logStep('Pre-condition: Mở trang chủ và đi tới màn hình Register', async () => {
+    await homePage.navigateTo(env.baseURL);
     await homePage.click_Menu_Account_Link();
     await homePage.click_Register_Link();
-    await registerPage.clickRegisterButton();
-    //const error = await registerPage.getFieldError("firstname");
-    expect(await registerPage.getFieldError("firstname")).toBe(testData.register_error_message);
-    expect(await registerPage.getFieldError("lastname")).toBe(testData.register_error_message);
-    expect(await registerPage.getFieldError("email_address")).toBe(testData.register_error_message);
-    expect(await registerPage.getFieldError("password")).toBe(testData.register_error_message);
-    expect(await registerPage.getFieldError("confirmation")).toBe(testData.register_error_message);
-
+  });
   });
 
-// ❌ CASE 2 – EMAIL INVALID
-  test("Register fail: invalid email format", async ({ registerPage, homePage, page, browserName }) => {
-    // BƯỚC 1: Bấm Menu Account 
-    await test.step('1. Bấm vào Menu Account', async () => {
-    await homePage.click_Menu_Account_Link(); 
-    })
-    // BƯỚC 2: Bấm vào Register Link
-    await test.step('2. Bấm vào Register Link', async () => {
-    await homePage.click_Register_Link();
-    })    
-    // BƯỚC 3: Nhập thông tin hợp lệ vào tất cả các field, riêng email nhập sai định dạng 
-    await test.step('3. Nhập thông tin hợp lệ vào tất cả các field, riêng email nhập sai định dạng', async () => {
-    await registerPage.enterFirstname(testData.firstname);
-    await registerPage.enterMiddlename(testData.middlename);
-    await registerPage.enterLastname(testData.lastname);
-    await registerPage.enterEmail(testData.invalid_email);
-    await registerPage.enterPassword(testData.password);
-    await registerPage.enterConfirmPassword(testData.confirm_password);
-    await registerPage.clickRegisterButton();
-    /*const validationMessage = await page.locator("#email_address")
-    .evaluate((el: any) => el.validationMessage);
-     expect(validationMessage).toBe(testData.email_toast_error_message);*/
-    const msg = await registerPage.getEmailValidationMessage();
-    expect(msg).toBe(testData.email_toast_error_message[browserName]);
-    })
-  // 2. Viết if/else để check riêng cho từng thằng
-   /* if (browserName === 'firefox') {
-        expect(msg).toBe("Please enter an email address.");
-    } 
-    else if (browserName === 'chromium') {
-        // Chromium (Chrome/Edge) thì dùng lại cái data cũ của anh
-        expect(msg).toBe(testData.email_toast_error_message); 
-    } 
-    else if (browserName === 'webkit') {
-        // Chuẩn bị sẵn cho Safari (nếu team anh có yêu cầu chạy)
-        expect(msg).toBe("Enter a valid email address."); // Lưu ý: Câu này em ví dụ, anh check lại trên Safari thực tế nhé
-    }*/
+  test('CASE 1 – TẤT CẢ FIELD ĐỂ TRỐNG', async ({ registerPage, homePage }) => {
+    await test.step('1.  Bấm nút Register khi để trống tất cả các trường', async () => {
+      await registerPage.clickRegisterButton();
+    });
+    await test.step('2. Xác minh thông báo lỗi bắt buộc nhập ở cả 5 trường', async () => {
+      const requiredFields = ['firstname', 'lastname', 'email_address', 'password', 'confirmation'];
+      for (const field of requiredFields) {
+        await registerPage.verifyFieldError(field, testData.register_error_message);
+      }
+    });
   });
 
-// ❌ CASE 3 – PASSWORD < 6 KÝ TỰ
-   test("Register unsuccessfully when password is less than 6 characters", async ({ registerPage, homePage, page }) => {
-    await homePage.click_Menu_Account_Link();
-    await homePage.click_Register_Link();
-    await registerPage.enterFirstname(testData.firstname);
-    await registerPage.enterMiddlename(testData.middlename);
-    await registerPage.enterLastname(testData.lastname);
-    await registerPage.enterEmail(testData.valid_email);
-    await registerPage.enterPassword(testData.short_password);
-    await registerPage.enterConfirmPassword(testData.short_password);
-    await registerPage.clickRegisterButton();
-  const error = await registerPage.getMinLengthPasswordError();
-  expect(error).toBe(testData.password_min_length_error);
-});
-
-
-
-// ❌ CASE 4 – PASSWORD & CONFIRM PASSWORD KHÔNG TRÙNG
-   test("Register unsuccessfully when password and confirm password do not match", async ({ registerPage, homePage, page }) => {
-    await homePage.click_Menu_Account_Link();
-
-    await homePage.click_Register_Link();
-
-    await registerPage.enterFirstname(testData.firstname);
-    await registerPage.enterMiddlename(testData.middlename);
-    await registerPage.enterLastname(testData.lastname);
-    await registerPage.enterEmail(testData.valid_email);
-    await registerPage.enterPassword(testData.short_password);
-    await registerPage.enterConfirmPassword(testData.non_password);
-    await registerPage.clickRegisterButton();
-  const error = await registerPage.getPasswordMismatchError();
-  expect(error).toBe(testData.password_not_match_error);
-});
-
-
-// ❌ CASE 5 – REGISTER SUCCESSFULLY
-test('Register successfully with valid credentials', async ({ page, registerPage, homePage, testUser, env }) => {
-  //await page.goto('/');
-  //const bagePage = new BasePage(page)
-  //khai báo ở fixtures.ts thì ko cần khởi tạo ở đây nữa
- // const registerPage = new RegisterPage(page);
-  const randomEmail = generateRandomEmail();
-  const password = testData.password;
-  const confirm_password = testData.confirm_password;
-  //await bagePage.navigateTo('/');
-  await allure.step('Đi tới trang register', async () => {
-  //await registerPage.goTo(envConfig.baseURL);
-  await registerPage.navigateTo(env.baseURL);
-  //await registerPage.navigateToRegisterPage();
-  });
-  //await page.getByRole('link', { name: 'Account', exact: true }). click();
-  //await page.getByRole('link', { name: 'Register' }). click();
-  await allure.step('Bấm vào Menu Account', async () => {
-  await homePage.click_Menu_Account_Link();
+  test('CASE 2 – EMAIL INVALID', async ({ registerPage, homePage, browserName }) => {
+    await test.step('1. Nhập thông tin hợp lệ vào các field, riêng email nhập sai định dạng và bấm nút Register', async () => {
+      await registerPage.enterFirstname(testData.firstname);
+      await registerPage.enterMiddlename(testData.middlename);
+      await registerPage.enterLastname(testData.lastname);
+      await registerPage.enterEmail(testData.invalid_email);
+      await registerPage.enterPassword(testData.password);
+      await registerPage.enterConfirmPassword(testData.confirm_password);
+      await registerPage.clickRegisterButton();
+    });
+    await test.step('2. Xác minh thông báo lỗi định dạng email hiển thị theo từng trình duyệt', async () => {
+      await registerPage.verifyEmailValidationMessage(
+        testData.email_toast_error_message[browserName]
+      );
+    });
   });
 
-  await allure.step('Bấm vào nút Register', async () => {
-  await homePage.click_Register_Link();
+  test('CASE 3 – PASSWORD < 6 KÝ TỰ', async ({ registerPage, homePage }) => {
+    await test.step('1. Nhập thông tin hợp lệ vào các field, nhập mật khẩu dưới 6 ký tự và bấm nút Register', async () => {
+      await registerPage.enterFirstname(testData.firstname);
+      await registerPage.enterMiddlename(testData.middlename);
+      await registerPage.enterLastname(testData.lastname);
+      await registerPage.enterEmail(testData.valid_email);
+      await registerPage.enterPassword(testData.short_password);
+      await registerPage.enterConfirmPassword(testData.short_password);
+      await registerPage.clickRegisterButton();
+    });
+    await test.step('2. Xác minh thông báo lỗi độ dài mật khẩu tối thiểu', async () => {
+      await registerPage.verifyMinLengthPasswordError(testData.password_min_length_error);
+    });
   });
 
-  await allure.step('Nhập các thông tin hợp lê vào form đăng kí', async () => {
-  await registerPage.register(testData.firstname, testData.middlename, testData.lastname,randomEmail, password, confirm_password);
-  //await registerPage.register(testData.firstname, testData.middlename, testData.lastname,testUser.email, testUser.password,testUser.password);
+  test('CASE 4 – PASSWORD & CONFIRM PASSWORD KHÔNG TRÙNG', async ({ registerPage, homePage }) => {
+    await test.step('1.Nhập thông tin hợp lệ vào các field,nhập mật khẩu xác nhận không khớp và bấm nút Register', async () => {
+      await registerPage.enterFirstname(testData.firstname);
+      await registerPage.enterMiddlename(testData.middlename);
+      await registerPage.enterLastname(testData.lastname);
+      await registerPage.enterEmail(testData.valid_email);
+      await registerPage.enterPassword(testData.short_password);
+      await registerPage.enterConfirmPassword(testData.non_password);
+      await registerPage.clickRegisterButton();
+    });
+    await test.step('2. Xác minh thông báo lỗi mật khẩu không trùng khớp', async () => {
+      await registerPage.verifyPasswordMismatchError(testData.password_not_match_error);
+    });
   });
 
-  fs.writeFileSync('tests/data/user_login.json', JSON.stringify({ randomEmail, password }, null, 2));
+  test('CASE 5 – REGISTER SUCCESSFULLY', async ({ page, registerPage, homePage, testUser, env }) => {
+    const randomEmail = DataGenerator.generateRandomEmail();
+    const password = testData.password;
+    const confirm_password = testData.confirm_password;
+  
+    await logStep('1. Nhập các thông tin hợp lê vào form đăng kí và bấm nút Register', async () => {
+      await registerPage.register(
+        testData.firstname, 
+        testData.middlename, 
+        testData.lastname, 
+        randomEmail, 
+        password,
+        confirm_password);
+    });
+    await logStep('2. Xác minh hệ thống chuyển hướng vào trang My DashBoard', async () => {
+      await expect(page.getByRole('heading', { name: 'My Dashboard' })).toBeVisible();
+      await expect(page.getByText('Thank you for registering')).toHaveText('Thank you for registering with Main Website Store.');
+    });
 
-  // Expects page to have a heading with the name of Installation.
-  await allure.step('Xác minh hệ thống chuyển hướng vào trang My DashBoard', async () => {
-  await expect(page.getByRole('heading', { name: 'My Dashboard' })).toBeVisible();
-  await expect(page.getByText('Thank you for registering')).toHaveText('Thank you for registering with Main Website Store.');
-      });
-})
+     fs.writeFileSync('tests/data/user_login.json', JSON.stringify({ randomEmail, password }, null, 2));
+  })
 });

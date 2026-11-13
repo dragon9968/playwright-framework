@@ -117,3 +117,10 @@ export const test = base.extend<MyFixtures>({
 
 // Export expect để các file spec chỉ cần import từ BaseTest
 export { expect } from '@playwright/test';
+
+//Vì file .spec.ts không dùng được this.step(),
+//  anh có thể tạo một hàm dùng chung logStep trong file tests/base/BaseTest.ts để bọc console.log + test.step lại làm một:
+export async function logStep<T>(title: string, action: () => Promise<T>): Promise<T> {
+  console.log(`\n=== [TEST STEP]: ${title} ===`);
+  return await test.step(title, action);
+}
