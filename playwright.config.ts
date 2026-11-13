@@ -39,7 +39,7 @@ export default defineConfig({
     baseURL: 'http://live.techpanda.org/index.php/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     //screenshot: 'on',
     screenshot: 'only-on-failure',
     video: isCI ? 'retain-on-failure' : 'off',
