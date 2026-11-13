@@ -1,0 +1,15 @@
+
+=== [TEST STEP]: Pre-condition: Mở trang chủ và đi tới màn hình Register ===
+▶ [STEP]: Đi tới trang: http://live.techpanda.org/index.php
+
+=== [TEST STEP]: 1. Nhập các thông tin hợp lê vào form đăng kí và bấm nút Register ===
+▶ [STEP]: Nhập firstname: long
+▶ [STEP]: Nhập middlename: dinh
+▶ [STEP]: Nhập lastname: nguyen
+▶ [STEP]: Nhập email: long_mwesw3nly6y5y@qa.team
+▶ [STEP]: Nhập password: 123456
+▶ [STEP]: Nhập confirmpassword: 123456
+▶ [STEP]: Tick vào Subscribe checkbox
+▶ [STEP]: Click nút Register
+
+=== [TEST STEP]: 2. Xác minh hệ thống chuyển hướng vào trang My DashBoard ===
