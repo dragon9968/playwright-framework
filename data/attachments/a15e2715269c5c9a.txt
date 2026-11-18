@@ -1,0 +1,11 @@
+
+=== [TEST STEP]: Pre-condition: Mở trang chủ và đi tới màn hình Login ===
+▶ [STEP]: Đi tới trang: http://live.techpanda.org/index.php
+
+=== [TEST STEP]: 1. Đăng nhập với email và mật khẩu không tồn tại ===
+▶ [STEP]: Nhập email: notfound@gmail.com
+▶ [STEP]: Nhập password: abcdef
+▶ [STEP]: Bấm nút Login
+
+=== [TEST STEP]: 2. Xác minh thông báo đăng nhập thất bại ===
+▶ [STEP]: Xác minh thông báo đăng nhập thất bại: "Invalid login or password."

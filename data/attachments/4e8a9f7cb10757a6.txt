@@ -1,0 +1,3 @@
+▶ [STEP]: Đi tới trang: mobile.html
+discountAmount: -$5.00
+grandTotal: $100.00

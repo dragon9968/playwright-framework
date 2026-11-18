@@ -1,0 +1,11 @@
+
+=== [TEST STEP]: Pre-condition: Mở trang chủ và đi tới màn hình Login ===
+▶ [STEP]: Đi tới trang: http://live.techpanda.org/index.php
+
+=== [TEST STEP]: 1. Nhập email sai định dạng domain và bấm Login ===
+▶ [STEP]: Nhập email: long@qa
+▶ [STEP]: Nhập password: 123456
+▶ [STEP]: Bấm nút Login
+
+=== [TEST STEP]: 2. Xác minh thông báo lỗi định dạng Email hiển thị trên form ===
+▶ [STEP]: Xác minh lỗi định dạng Email trên form: "Please enter a valid email address. For example johndoe@domain.com."

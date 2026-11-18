@@ -1,0 +1,10 @@
+
+=== [TEST STEP]: Pre-condition: Mở trang chủ và đi tới màn hình Login ===
+▶ [STEP]: Đi tới trang: http://live.techpanda.org/index.php
+
+=== [TEST STEP]: 1. Bấm nút Login khi để trống tất cả các trường ===
+▶ [STEP]: Bấm nút Login
+
+=== [TEST STEP]: 2. Xác minh thông báo lỗi bắt buộc nhập ở cả Email và Password ===
+▶ [STEP]: Xác minh lỗi bắt buộc nhập tại trường "email": "This is a required field."
+▶ [STEP]: Xác minh lỗi bắt buộc nhập tại trường "pass": "This is a required field."
