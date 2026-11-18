@@ -1,6 +1,4 @@
-import { Page, Locator } from '@playwright/test';
 import { BasePage } from '../base/BasePage';
-import { allure } from 'allure-playwright';
 import { RegisterPageUI } from '../pageUI/RegisterPageUI';
 
 
@@ -10,68 +8,57 @@ export class RegisterPage extends BasePage {
     const bagePage = new BasePage(page) // dùng trực tiếp, ko cần kế thưa BásePage nữa
   }*/ 
 
- /* async navigateToRegisterPage() {
-    await this.page.goto('/');
-  }*/
-
   async enterFirstname(firstname: string) {
-    await allure.step(`Nhập firstname: ${firstname}`, async () => {
-    //await this.page.fill(this.firstnameField, firstname);
+    await this.step(`Nhập firstname: ${firstname}`, async () => {
     await this.fillInput(RegisterPageUI.firstnameField, firstname);
     await this.wait();
         });
   }
 
   async enterLastname(lastname: string) {
-    await allure.step(`Nhập lastname: ${lastname}`, async () => {
-    //await this.page.fill(this.lastnameField, lastname);
+    await this.step(`Nhập lastname: ${lastname}`, async () => {
     await this.fillInput(RegisterPageUI.lastnameField, lastname);
     await this.wait();
     });
   }
 
   async enterMiddlename(middlename: string) {
-    await allure.step(`Nhập middlename: ${middlename}`, async () => {
-    //await this.page.fill(this.middlenameField, middlename);
+    await this.step(`Nhập middlename: ${middlename}`, async () => {
     await this.fillInput(RegisterPageUI.middlenameField, middlename);
     await this.wait();
     });
   }
 
   async enterEmail(email: string) {
-    await allure.step(`Nhập email: ${email}`, async () => {
-    //await this.page.fill(this.emailField, email);
+    await this.step(`Nhập email: ${email}`, async () => {
     await this.fillInput(RegisterPageUI.emailField, email);
     await this.wait();
     });
   }
 
   async enterPassword(password: string) {
-    await allure.step(`Nhập password: ${password}`, async () => {
-    //await this.page.fill(this.passwordField, password);
+    await this.step(`Nhập password: ${password}`, async () => {
     await this.fillInput(RegisterPageUI.passwordField, password);
     await this.wait();
     });
   }
 
   async enterConfirmPassword(confirmpassword: string) {
-     await allure.step(`Nhập confirmpassword: ${confirmpassword}`, async () => {
-    //await this.page.fill(this.confirmpasswordField, confirmpassword);
+     await this.step(`Nhập confirmpassword: ${confirmpassword}`, async () => {
     await this.fillInput(RegisterPageUI.confirmpasswordField, confirmpassword);
     await this.wait();
      });
   }
 
   async checkonSubscribedCheckbox() {
-      await allure.step(`Tick vào Subscribe checkbox`, async () => {
+      await this.step(`Tick vào Subscribe checkbox`, async () => {
     await this.page.check(RegisterPageUI.subscribedCheckbox);
     await this.wait();
       });
   }
 
   async clickRegisterButton(): Promise<void> {
-        await allure.step(`Click nút Register`, async () => {
-    //await this.clickElementByRole('button', 'Register');
+        await this.step(`Click nút Register`, async () => {
         await this.waitForElementVisible(RegisterPageUI.registerButton);
         await this.clickElement(RegisterPageUI.registerButton);
       }); 
@@ -88,26 +75,28 @@ export class RegisterPage extends BasePage {
     await this.checkonSubscribedCheckbox();
     await this.clickRegisterButton();
   }
-
-  async getFieldError(fieldName: string) {
-    return this.getElementText(RegisterPageUI.fieldError(fieldName));
-  }
-
-  async getPasswordMismatchError() {
-    return await this.getElementText(RegisterPageUI.passwordMismatchError);
-  }
-
-  async getMinLengthPasswordError() {
-    return await this.getElementText(RegisterPageUI.passwordMinLengthError);
-  }
-
-  async getEmailToastError() {
-    return this.getAttribute(RegisterPageUI.emailToastError, "validationMessage");
-  }
   
-  async getEmailValidationMessage() {
-  //const locator = this.page.locator(RegisterPageUI.emailField);
-  //return await locator.evaluate((el: any) => el.validationMessage);
-  return await this.getValidationMessage(RegisterPageUI.emailField);
-}
+  async verifyFieldError(fieldName: string, expectedMessage: string) {
+    await this.step(`Xác minh lỗi tại trường "${fieldName}": ${expectedMessage}`, async () => {
+      await this.expectText(RegisterPageUI.fieldError(fieldName), expectedMessage);
+    });
+  }
+
+  async verifyEmailValidationMessage(expectedMessage: string) {
+    await this.step(`Xác minh thông báo lỗi định dạng Email: "${expectedMessage}"`, async () => {
+      await this.expectValidationMessage(RegisterPageUI.emailField, expectedMessage);
+    });
+  }
+
+  async verifyMinLengthPasswordError(expectedMessage: string) {
+    await this.step(`Xác minh lỗi độ dài mật khẩu tối thiểu: "${expectedMessage}"`, async () => {
+      await this.expectText(RegisterPageUI.passwordMinLengthError, expectedMessage);
+    });
+  }
+
+  async verifyPasswordMismatchError(expectedMessage: string) {
+    await this.step(`Xác minh lỗi xác nhận mật khẩu không khớp: "${expectedMessage}"`, async () => {
+      await this.expectText(RegisterPageUI.passwordMismatchError, expectedMessage);
+    });
+  }
 }

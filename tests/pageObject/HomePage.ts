@@ -35,4 +35,10 @@ export class HomePage extends BasePage {
   async openFirstProduct() {
     await this.clickElement(HomePageUI.FIRST_PRODUCT_LINK);
   }
+
+  async verifyHomePageTitle() {
+    await this.step('Xác minh tiêu đề trang chủ (Home page)', async () => {
+      await this.expectTitle(/Home page/);
+    });
+  }
 }
